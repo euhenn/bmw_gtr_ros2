@@ -1,0 +1,9 @@
+
+<launch>
+  <node
+    name="automobile"
+    pkg="gazebo_ros"
+    executable="spawn_entity.py"
+    output="screen"
+    arguments="-file $(find models_pkg)/rcCar_assembly/model.sdf -model automobile -sdf -x 13.0 -y 2.0 -z 0.03 -Y 0.01"/>
+</launch>
