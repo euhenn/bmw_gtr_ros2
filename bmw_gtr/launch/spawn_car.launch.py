@@ -9,7 +9,7 @@ def generate_launch_description():
             name='spawn_automobile',
             arguments=[
                 '-entity', 'automobile',
-                '-file', '/ros2_ws/src/bmw_gtr_ros2/models/rcCar_assembly/model.sdf',
+                '-file', '/ros2_ws/src/bmw_gtr/models/rcCar_assembly/model.sdf',
                 '-x', '13.0',
                 '-y', '2.0',
                 '-z', '0.03'

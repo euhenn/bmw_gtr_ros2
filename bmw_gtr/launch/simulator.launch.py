@@ -1,0 +1,52 @@
+from launch import LaunchDescription
+from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
+
+def generate_launch_description():
+
+    gazebo_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+                FindPackageShare('gazebo_ros'),
+                'launch',
+                'gazebo.launch.py'
+            ])
+        ]),
+        launch_arguments={
+            'world': PathJoinSubstitution([
+                FindPackageShare('bmw_gtr'),
+                'worlds',
+                'bfmc_track.world'
+            ])
+        }.items()
+    )
+    
+    spawn_entity = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        name='spawn_automobile',
+        arguments=[
+            '-entity', 'automobile',
+            '-file', PathJoinSubstitution([
+                FindPackageShare('bmw_gtr'),
+                'models/rcCar_assembly/model.sdf'
+            ]),
+            '-x', '13.0',
+            '-y', '2.0',
+            '-z', '0.03'
+        ],
+        output='screen'
+    )
+    
+    delayed_spawn = TimerAction(
+        period=5.0,  # seconds
+        actions=[spawn_entity]
+    )
+
+    return LaunchDescription([
+        gazebo_launch,
+        delayed_spawn
+    ])
