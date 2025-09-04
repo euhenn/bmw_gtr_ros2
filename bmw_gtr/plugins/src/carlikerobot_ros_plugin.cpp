@@ -1,6 +1,7 @@
 // carlikerobot_ros_plugin.cpp - Fixed version with proper registration
 
 #include "carlikerobot_ros_plugin.hpp"
+#include <rclcpp/qos.hpp>
 
 #define DEBUG true
 
@@ -31,7 +32,8 @@ CMessageHandler::CMessageHandler(std::string _modelName, IRobotCommandSetter* _s
 
     this->_feedbackPublisher = _rosNode->create_publisher<std_msgs::msg::String>(
         listen_topicName, 
-        10  
+        10
+        //rclcpp::QoS(1000).reliable()  // Increase from 10 to 100
     );
 
     // Create executor and spin in background thread

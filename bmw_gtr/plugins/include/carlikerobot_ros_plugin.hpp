@@ -12,6 +12,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/executors.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <rclcpp/qos.hpp>
 
 namespace gazebo {
 namespace carlikerobot {

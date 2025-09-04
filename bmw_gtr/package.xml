@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>bmw_gtr_ros2</name>
+  <name>bmw_gtr</name>
   <version>0.0.0</version>
   <description>ROS2 package for BMW GTR simulation</description>
   <maintainer email="root@todo.todo">root</maintainer>
@@ -25,5 +25,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
+    <gazebo_ros gazebo_model_path="${prefix}/models"/>
   </export>
 </package>
