@@ -3,7 +3,7 @@
 #include "carlikerobot_ros_plugin.hpp"
 #include <rclcpp/qos.hpp>
 
-#define DEBUG true
+#define DEBUG false
 
 namespace gazebo {
 namespace carlikerobot {
@@ -183,7 +183,7 @@ void CMessageHandler::moveMessage(float speed, float steer) {
 
 // CCarLikeRobotRosPlugin implementation
 void CCarLikeRobotRosPlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf) {
-    std::cout << "=== CCarLikeRobotRosPlugin::Load() called ===" << std::endl;
+    //std::cout << "=== CCarLikeRobotRosPlugin::Load() called ===" << std::endl;
     
     // Store the model pointer
     this->_model = _parent;
@@ -212,8 +212,8 @@ void CCarLikeRobotRosPlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr _sd
     // Initialize speed and steering values
     this->f_speed = 0.0;
     this->f_steer = 0.0;
-    
-    std::cout << "=== CCarLikeRobotRosPlugin loaded successfully ===" << std::endl;
+
+    //std::cout << "=== CCarLikeRobotRosPlugin loaded successfully ===" << std::endl;
 }
 
 

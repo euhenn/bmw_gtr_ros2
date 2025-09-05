@@ -98,7 +98,7 @@
 					</contact>
 				</surface>
 			</collision>
-			<!--sensor name="camera_top_sensor" type="camera">
+			<sensor name="camera_top_sensor" type="camera">
         	<pose>0 1 2.5 0 1.04 -1.5708</pose>  
         	<camera>
         	  <horizontal_fov>1.047</horizontal_fov>  
@@ -119,9 +119,9 @@
         	</camera>
         	<plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
         	  <ros>
-			  	<namespace>/demo</namespace>
-        	    <remapping>image_raw:=camera_top/image</remapping>
-        	    <remapping>camera_info:=camera_top/info</remapping>
+			  	<namespace>/automobile/camera_top</namespace>
+        	    <remapping>image_raw:=image</remapping>
+        	    <remapping>camera_info:=info</remapping>
         	  </ros>
         	  <camera_name>camera_top</camera_name>
         	  <frame_name>chassis_link</frame_name>
@@ -151,16 +151,16 @@
             </camera>
             <plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
               <ros>
-		      	<namespace>/demo</namespace>
-                <remapping>image_raw:=camera/image</remapping>
-                <remapping>camera_info:=camera/info</remapping>
+		      	<namespace>/automobile/camera</namespace>
+                <remapping>image_raw:=image</remapping>
+                <remapping>camera_info:=info</remapping>
               </ros>
               <camera_name>camera</camera_name>
               <frame_name>chassis_link</frame_name>
               <hack_baseline>0.07</hack_baseline>
               <update_rate>120.0</update_rate>
             </plugin>
-        	</sensor-->
+        	</sensor>
 		</link>
 		<link name='car_body_link'>
 			<pose>-0.0215 0 -0.0325 0 0 0</pose>
@@ -846,7 +846,7 @@
 
 		<!-- ############################  PLUGINS   ############################ -->
 
-		<plugin name='carlike_robot_plugin' filename='libcar_plugin.so'>
+		<plugin name='carlike_robot_plugin' filename='libcarlikerobot_ros_plugin.so'>
 			<wheelbase>0.26</wheelbase>
 			<axletrack>0.162</axletrack>
 			<wheelradius>0.0325</wheelradius>
@@ -874,6 +874,7 @@
 			<initial_speed>0.0</initial_speed>
 			<robotNamespace>/</robotNamespace>
 		</plugin>
-		
+		<plugin name='bno055' filename='libbno055_plugin.so'> </plugin>
+
 	</model>
 </sdf>
