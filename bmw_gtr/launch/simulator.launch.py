@@ -27,12 +27,12 @@ def generate_launch_description():
     spawn_entity = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
-        name='spawn_automobile',
+        name='spawn_m3_gtr',
         arguments=[
-            '-entity', 'automobile',
+            '-entity', 'm3_gtr',
             '-file', PathJoinSubstitution([
                 FindPackageShare('bmw_gtr'),
-                'models/rcCar_assembly/model.sdf'
+                'models/m3_gtr/model.sdf'
             ]),
             '-x', '13.0',
             '-y', '2.0',
