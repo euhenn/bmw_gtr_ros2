@@ -1,1 +1,1 @@
-# bmw_gtr_ros2
+# ROS2 foxy simulation with ackerman model car
