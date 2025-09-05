@@ -119,7 +119,7 @@
         	</camera>
         	<plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
         	  <ros>
-			  	<namespace>/automobile/camera_top</namespace>
+			  	<namespace>/automobile</namespace>
         	    <remapping>image_raw:=image</remapping>
         	    <remapping>camera_info:=info</remapping>
         	  </ros>
@@ -151,7 +151,7 @@
             </camera>
             <plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
               <ros>
-		      	<namespace>/automobile/camera</namespace>
+		      	<namespace>/automobile</namespace>
                 <remapping>image_raw:=image</remapping>
                 <remapping>camera_info:=info</remapping>
               </ros>
@@ -875,6 +875,7 @@
 			<robotNamespace>/</robotNamespace>
 		</plugin>
 		<plugin name='bno055' filename='libbno055_plugin.so'> </plugin>
+		<plugin name='gps' filename='libgps_plugin.so'> </plugin>
 
 	</model>
 </sdf>
