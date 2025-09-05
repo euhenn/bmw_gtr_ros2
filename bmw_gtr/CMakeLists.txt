@@ -22,6 +22,7 @@ find_package(rosidl_default_generators REQUIRED)
 # === Custom messages ===
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/IMU.msg"
+  "msg/Localisation.msg"
   DEPENDENCIES std_msgs geometry_msgs
 )
 
@@ -42,6 +43,7 @@ target_include_directories(carlikerobot_ros_plugin PUBLIC
 )
 target_link_libraries(carlikerobot_ros_plugin bmw_gtr__rosidl_typesupport_cpp)
 
+# IMU Plugin 
 add_library(bno055_plugin SHARED
   plugins/src/bno055_plugin.cpp
 )
@@ -54,12 +56,25 @@ target_include_directories(bno055_plugin PUBLIC
 )
 target_link_libraries(bno055_plugin bmw_gtr__rosidl_typesupport_cpp)
 
+# GPS Plugin
+add_library(gps_plugin SHARED
+  plugins/src/gps_plugin.cpp
+)
+ament_target_dependencies(gps_plugin
+  rclcpp std_msgs geometry_msgs gazebo_ros gazebo_dev
+)
+target_include_directories(gps_plugin PUBLIC
+  plugins/include
+  ${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp
+)
+target_link_libraries(gps_plugin bmw_gtr__rosidl_typesupport_cpp)
+
 # === Install ===
 install(DIRECTORY msg
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(TARGETS carlikerobot_ros_plugin bno055_plugin
+install(TARGETS carlikerobot_ros_plugin bno055_plugin gps_plugin
   LIBRARY DESTINATION lib
 )
 
