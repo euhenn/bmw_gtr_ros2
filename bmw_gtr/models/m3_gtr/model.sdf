@@ -95,74 +95,70 @@
 					</contact>
 				</surface>
 			</collision>
+			<!--sensor name="camera_top_sensor" type="camera">
+        	<pose>0 1 2.5 0 1.04 -1.5708</pose>  
+        	<camera>
+        	  <horizontal_fov>1.047</horizontal_fov>  
+        	  <image>
+        	    <width>640</width>
+        	    <height>480</height>
+        	    <format>R8G8B8</format>
+        	  </image>
+        	  <clip>
+        	    <near>0.1</near>
+        	    <far>100</far>
+        	  </clip>
+        	  <noise>
+        	    <type>gaussian</type>
+        	    <mean>0.0</mean>
+        	    <stddev>0.007</stddev>
+        	  </noise>
+        	</camera>
+        	<plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
+        	  <ros>
+			  	<namespace>/demo</namespace>
+        	    <remapping>image_raw:=camera_top/image</remapping>
+        	    <remapping>camera_info:=camera_top/info</remapping>
+        	  </ros>
+        	  <camera_name>camera_top</camera_name>
+        	  <frame_name>chassis_link</frame_name>
+        	  <hack_baseline>0.07</hack_baseline>
+        	  <update_rate>30.0</update_rate>
+        	</plugin>
+      		</sensor>
 
-      <!--sensor name="camera_top_sensor" type="camera">
-        <pose>0 1 2.5 0 1.04 -1.5708</pose>  
-        <camera>
-          <horizontal_fov>1.047</horizontal_fov>  
-          <image>
-            <width>640</width>
-            <height>480</height>
-            <format>R8G8B8</format>
-          </image>
-          <clip>
-            <near>0.1</near>
-            <far>100</far>
-          </clip>
-          <noise>
-            <type>gaussian</type>
-            <mean>0.0</mean>
-            <stddev>0.007</stddev>
-          </noise>
-        </camera>
-        <plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
-          <ros>
-		  	<namespace>/demo</namespace>
-            <remapping>image_raw:=camera_top/image</remapping>
-            <remapping>camera_info:=camera_top/info</remapping>
-          </ros>
-          <camera_name>camera_top</camera_name>
-          <frame_name>chassis_link</frame_name>
-          <hack_baseline>0.07</hack_baseline>
-          <update_rate>30.0</update_rate>
-        </plugin>
-      </sensor>
-
-      <sensor name="camera_sensor" type="camera">
-        <pose>0 -0.05 0.211 0 0.5235988 -1.5708</pose>
-        <camera>
-          <horizontal_fov>1.22173</horizontal_fov> 
-          <image>
-            <width>320</width>
-            <height>240</height>
-            <format>R8G8B8</format>
-          </image>
-          <clip>
-            <near>0.1</near>
-            <far>4</far>
-          </clip>
-          <noise>
-            <type>gaussian</type>
-            <mean>0.0</mean>
-            <stddev>0.007</stddev>
-          </noise>
-        </camera>
-        <plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
-          <ros>
-		  	<namespace>/demo</namespace>
-            <remapping>image_raw:=camera/image</remapping>
-            <remapping>camera_info:=camera/info</remapping>
-          </ros>
-          <camera_name>camera</camera_name>
-          <frame_name>chassis_link</frame_name>
-          <hack_baseline>0.07</hack_baseline>
-          <update_rate>120.0</update_rate>
-        </plugin>
-      </sensor-->
-
+      		<sensor name="camera_sensor" type="camera">
+            <pose>0 -0.05 0.211 0 0.5235988 -1.5708</pose>
+            <camera>
+              <horizontal_fov>1.22173</horizontal_fov> 
+              <image>
+                <width>320</width>
+                <height>240</height>
+                <format>R8G8B8</format>
+              </image>
+              <clip>
+                <near>0.1</near>
+                <far>4</far>
+              </clip>
+              <noise>
+                <type>gaussian</type>
+                <mean>0.0</mean>
+                <stddev>0.007</stddev>
+              </noise>
+            </camera>
+            <plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
+              <ros>
+		      	<namespace>/demo</namespace>
+                <remapping>image_raw:=camera/image</remapping>
+                <remapping>camera_info:=camera/info</remapping>
+              </ros>
+              <camera_name>camera</camera_name>
+              <frame_name>chassis_link</frame_name>
+              <hack_baseline>0.07</hack_baseline>
+              <update_rate>120.0</update_rate>
+            </plugin>
+        	</sensor-->
 		</link>
-
-
 		<link name='car_body_link'>
 			<pose>-0.0215 0 -0.0325 0 0 0</pose>
 			<inertial>
@@ -225,8 +221,10 @@
 				<surface>
 					<friction>
 						<ode>
-							<mu>0.9</mu> <!-- 0.7 -->
-							<mu2>0.9</mu2> <!-- 0.7 -->
+							<mu>0.9</mu>
+							<!-- 0.7 -->
+							<mu2>0.9</mu2>
+							<!-- 0.7 -->
 							<fdir1>0 0 0</fdir1>
 							<slip1>0</slip1>
 							<slip2>0</slip2>
@@ -307,8 +305,10 @@
 				<surface>
 					<friction>
 						<ode>
-							<mu>0.9</mu> <!-- 0.7 -->
-							<mu2>0.9</mu2> <!-- 0.7 -->
+							<mu>0.9</mu>
+							<!-- 0.7 -->
+							<mu2>0.9</mu2>
+							<!-- 0.7 -->
 							<fdir1>0 0 0</fdir1>
 							<slip1>0</slip1>
 							<slip2>0</slip2>
@@ -389,8 +389,10 @@
 				<surface>
 					<friction>
 						<ode>
-							<mu>0.9</mu> <!-- 0.7 -->
-							<mu2>0.9</mu2> <!-- 0.7 -->
+							<mu>0.9</mu>
+							<!-- 0.7 -->
+							<mu2>0.9</mu2>
+							<!-- 0.7 -->
 							<fdir1>0 0 0</fdir1>
 							<slip1>0</slip1>
 							<slip2>0</slip2>
@@ -471,8 +473,10 @@
 				<surface>
 					<friction>
 						<ode>
-							<mu>0.9</mu> <!-- 0.7 -->
-							<mu2>0.9</mu2> <!-- 0.7 -->
+							<mu>0.9</mu>
+							<!-- 0.7 -->
+							<mu2>0.9</mu2>
+							<!-- 0.7 -->
 							<fdir1>0 0 0</fdir1>
 							<slip1>0</slip1>
 							<slip2>0</slip2>
@@ -515,590 +519,346 @@
 				</surface>
 			</collision>
 		</link>
-		<link name='steering_left_link'>
-			<pose>0.1185 0.072 0 1.5708 0 0</pose>
-			<inertial>
-				<pose>0 0 0 0 0 0</pose>
-				<mass>0.001</mass>
-				<inertia>
-					<ixx>8.5833e-09</ixx>
-					<ixy>0</ixy>
-					<ixz>0</ixz>
-					<iyy>8.5833e-09</iyy>
-					<iyz>0</iyz>
-					<izz>5e-09</izz>
-				</inertia>
-			</inertial>
-			<gravity>1</gravity>
-			<self_collide>0</self_collide>
-			<kinematic>0</kinematic>
-			<enable_wind>0</enable_wind>
-			<visual name='steering_left_visual'>
-				<pose>0 0 0 0 0 0</pose>
-				<geometry>
-					<cylinder>
-						<radius>0.001</radius>
-						<length>0.01</length>
-					</cylinder>
-				</geometry>
-				<material>
-					<lighting>1</lighting>
-					<script>
-						<uri>file://media/materials/scripts/gazebo.material</uri>
-						<name>Gazebo/Grey</name>
-					</script>
-					<shader type='vertex'>
-						<normal_map>__default__</normal_map>
-					</shader>
-					<ambient>0.3 0.3 0.3 1</ambient>
-					<diffuse>0.7 0.7 0.7 1</diffuse>
-					<specular>0.01 0.01 0.01 1</specular>
-					<emissive>0 0 0 1</emissive>
-				</material>
-				<transparency>0</transparency>
-				<cast_shadows>1</cast_shadows>
-			</visual>
-			<!--collision name='steering_left_collision'>
-				<pose>0 0 0 0 0 0</pose>
-				<geometry>
-					<cylinder>
-						<radius>0.001</radius>
-						<length>0.01</length>
-					</cylinder>
-				</geometry>
-				<laser_retro>0</laser_retro>
-				<max_contacts>10</max_contacts>
-				<surface>
-					<friction>
-						<ode>
-							<mu>1</mu>
-							<mu2>1</mu2>
-							<fdir1>0 0 0</fdir1>
-							<slip1>0</slip1>
-							<slip2>0</slip2>
-						</ode>
-						<torsional>
-							<coefficient>1</coefficient>
-							<patch_radius>0</patch_radius>
-							<surface_radius>0</surface_radius>
-							<use_patch_radius>1</use_patch_radius>
-							<ode>
-								<slip>0</slip>
-							</ode>
-						</torsional>
-					</friction>
-					<bounce>
-						<restitution_coefficient>0</restitution_coefficient>
-						<threshold>1e+06</threshold>
-					</bounce>
-					<contact>
-						<collide_without_contact>0</collide_without_contact>
-						<collide_without_contact_bitmask>1</collide_without_contact_bitmask>
-						<collide_bitmask>1</collide_bitmask>
-						<ode>
-							<soft_cfm>0</soft_cfm>
-							<soft_erp>0.2</soft_erp>
-							<kp>1e+13</kp>
-							<kd>1</kd>
-							<max_vel>0.01</max_vel>
-							<min_depth>0</min_depth>
-						</ode>
-						<bullet>
-							<split_impulse>1</split_impulse>
-							<split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
-							<soft_cfm>0</soft_cfm>
-							<soft_erp>0.2</soft_erp>
-							<kp>1e+13</kp>
-							<kd>1</kd>
-						</bullet>
-					</contact>
-				</surface>
-			</collision-->
-		</link>
-		<link name='steering_right_link'>
-			<pose>0.1185 -0.072 0 1.5708 0 0</pose>
-			<inertial>
-				<pose>0 0 0 0 0 0</pose>
-				<mass>0.001</mass>
-				<inertia>
-					<ixx>8.5833e-09</ixx>
-					<ixy>0</ixy>
-					<ixz>0</ixz>
-					<iyy>8.5833e-09</iyy>
-					<iyz>0</iyz>
-					<izz>5e-09</izz>
-				</inertia>
-			</inertial>
-			<gravity>1</gravity>
-			<self_collide>0</self_collide>
-			<kinematic>0</kinematic>
-			<enable_wind>0</enable_wind>
-			<visual name='steering_right_visual'>
-				<pose>0 0 0 0 0 0</pose>
-				<geometry>
-					<cylinder>
-						<radius>0.001</radius>
-						<length>0.01</length>
-					</cylinder>
-				</geometry>
-				<material>
-					<lighting>1</lighting>
-					<script>
-						<uri>file://media/materials/scripts/gazebo.material</uri>
-						<name>Gazebo/Grey</name>
-					</script>
-					<shader type='vertex'>
-						<normal_map>__default__</normal_map>
-					</shader>
-					<ambient>0.3 0.3 0.3 1</ambient>
-					<diffuse>0.7 0.7 0.7 1</diffuse>
-					<specular>0.01 0.01 0.01 1</specular>
-					<emissive>0 0 0 1</emissive>
-				</material>
-				<transparency>0</transparency>
-				<cast_shadows>1</cast_shadows>
-			</visual>
-			<!--collision name='steering_right_collision'>
-				<pose>0 0 0 0 0 0</pose>
-				<geometry>
-					<cylinder>
-						<radius>0.001</radius>
-						<length>0.01</length>
-					</cylinder>
-				</geometry>
-				<laser_retro>0</laser_retro>
-				<max_contacts>10</max_contacts>
-				<surface>
-					<friction>
-						<ode>
-							<mu>1</mu>
-							<mu2>1</mu2>
-							<fdir1>0 0 0</fdir1>
-							<slip1>0</slip1>
-							<slip2>0</slip2>
-						</ode>
-						<torsional>
-							<coefficient>1</coefficient>
-							<patch_radius>0</patch_radius>
-							<surface_radius>0</surface_radius>
-							<use_patch_radius>1</use_patch_radius>
-							<ode>
-								<slip>0</slip>
-							</ode>
-						</torsional>
-					</friction>
-					<bounce>
-						<restitution_coefficient>0</restitution_coefficient>
-						<threshold>1e+06</threshold>
-					</bounce>
-					<contact>
-						<collide_without_contact>0</collide_without_contact>
-						<collide_without_contact_bitmask>1</collide_without_contact_bitmask>
-						<collide_bitmask>1</collide_bitmask>
-						<ode>
-							<soft_cfm>0</soft_cfm>
-							<soft_erp>0.2</soft_erp>
-							<kp>1e+13</kp>
-							<kd>1</kd>
-							<max_vel>0.01</max_vel>
-							<min_depth>0</min_depth>
-						</ode>
-						<bullet>
-							<split_impulse>1</split_impulse>
-							<split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
-							<soft_cfm>0</soft_cfm>
-							<soft_erp>0.2</soft_erp>
-							<kp>1e+13</kp>
-							<kd>1</kd>
-						</bullet>
-					</contact>
-				</surface>
-			</collision-->
-		</link>
-
-		<!-- JOINTS -->
-
-    <!-- Back wheels to chassis joint -->
-		<joint name='body_joint' type='fixed'>
-			<parent>chassis_link</parent>
-			<child>car_body_link</child>
-			<physics>
-				<ode>
-					<limit>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</limit>
-					<suspension>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</suspension>
-				</ode>
-			</physics>
-		</joint>
-		<joint name='wheel_back_left_joint' type='revolute'>
-			<parent>chassis_link</parent>
-			<child>wheel_back_left_link</child>
-			<axis>
-				<xyz>0 1 0</xyz>
-				<use_parent_model_frame>0</use_parent_model_frame>
-				<limit>
-					<lower>-1.79769e+308</lower>
-					<upper>1.79769e+308</upper>
-					<effort>-1</effort>
-					<velocity>-1</velocity>
-				</limit>
-				<dynamics>
-					<spring_reference>0</spring_reference>
-					<spring_stiffness>0</spring_stiffness>
-					<damping>0</damping>
-					<friction>0</friction>
-				</dynamics>
-			</axis>
-			<physics>
-				<ode>
-					<limit>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</limit>
-					<suspension>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</suspension>
-				</ode>
-			</physics>
-		</joint>
-		<joint name='wheel_back_right_joint' type='revolute'>
-			<parent>chassis_link</parent>
-			<child>wheel_back_right_link</child>
-			<axis>
-				<xyz>0 -1 0</xyz>
-				<use_parent_model_frame>0</use_parent_model_frame>
-				<limit>
-					<lower>-1.79769e+308</lower>
-					<upper>1.79769e+308</upper>
-					<effort>-1</effort>
-					<velocity>-1</velocity>
-				</limit>
-				<dynamics>
-					<spring_reference>0</spring_reference>
-					<spring_stiffness>0</spring_stiffness>
-					<damping>0</damping>
-					<friction>0</friction>
-				</dynamics>
-			</axis>
-			<physics>
-				<ode>
-					<limit>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</limit>
-					<suspension>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</suspension>
-				</ode>
-			</physics>
-		</joint>
-
-    <!-- BIG TODO: The ackerman plugin tends to break or make the car vibrate when steering due to the steering joints. FIX IT! -->
-
-    <!-- Steering to chassis joint -->
-		<joint name='steering_left_joint' type='revolute'>
-			<parent>chassis_link</parent>
-			<child>steering_left_link</child>
-			<axis>
-				<xyz>0 1 0</xyz>
-				<use_parent_model_frame>0</use_parent_model_frame>
-				<limit>
-					<lower>-0.523599</lower> <!-- 30 degrees in radians -->
-					<upper>0.523599</upper>
-					<effort>-1</effort>
-					<velocity>-1</velocity>
-				</limit>
-				<dynamics>
-					<spring_reference>0</spring_reference>
-					<spring_stiffness>0</spring_stiffness>
-					<damping>0.01</damping> <!-- a bit of damping helped -->
-					<friction>0</friction> <!-- adding friction breaks the model -->
-				</dynamics>
-			</axis>
-			<physics>
-				<ode>
-					<limit>
-						<cfm>0</cfm>
-						<erp>0.1</erp> <!-- 0.2 to 0.1 -->
-					</limit>
-					<suspension>
-						<cfm>0</cfm>
-						<erp>0.1</erp> <!-- 0.2 to 0.1 -->
-					</suspension>
-				</ode>
-			</physics>
-		</joint>
-		<joint name='steering_right_joint' type='revolute'>
-			<parent>chassis_link</parent>
-			<child>steering_right_link</child>
-			<axis>
-				<xyz>0 1 0</xyz>
-				<use_parent_model_frame>0</use_parent_model_frame>
-				<limit>
-					<lower>-0.523599</lower> <!-- 30 degrees in radians -->
-					<upper>0.523599</upper>
-					<effort>-1</effort>
-					<velocity>-1</velocity>
-				</limit>
-				<dynamics>
-					<spring_reference>0</spring_reference>
-					<spring_stiffness>0</spring_stiffness>
-					<damping>0.01</damping> <!-- a bit of damping helped -->
-					<friction>0</friction> <!-- adding friction breaks the model -->
-				</dynamics>
-			</axis>
-			<physics>
-				<ode>
-					<limit>
-						<cfm>0</cfm>
-						<erp>0.1</erp> <!-- 0.2 to 0.1 -->
-					</limit>
-					<suspension>
-						<cfm>0</cfm>
-						<erp>0.1</erp> <!-- 0.2 to 0.1 -->
-					</suspension>
-				</ode>
-			</physics>
-		</joint>
-
-    <!-- Front wheels to steering joint -->
-		<joint name='wheel_front_left_joint' type='revolute'>
-			<parent>steering_left_link</parent>
-			<child>wheel_front_left_link</child>
-			<axis>
-				<xyz>0 1 0</xyz>
-				<use_parent_model_frame>0</use_parent_model_frame>
-				<limit>
-					<lower>-1.79769e+308</lower>
-					<upper>1.79769e+308</upper>
-					<effort>-1</effort>
-					<velocity>-1</velocity>
-				</limit>
-				<dynamics>
-					<spring_reference>0</spring_reference>
-					<spring_stiffness>0</spring_stiffness>
-					<damping>0</damping>
-					<friction>0</friction>
-				</dynamics>
-			</axis>
-			<physics>
-				<ode>
-					<limit>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</limit>
-					<suspension>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</suspension>
-				</ode>
-			</physics>
-		</joint>
-		<joint name='wheel_front_right_joint' type='revolute'>
-			<parent>steering_right_link</parent>
-			<child>wheel_front_right_link</child>
-			<axis>
-				<xyz>0 -1 0</xyz>
-				<use_parent_model_frame>0</use_parent_model_frame>
-				<limit>
-					<lower>-1.79769e+308</lower>
-					<upper>1.79769e+308</upper>
-					<effort>-1</effort>
-					<velocity>-1</velocity>
-				</limit>
-				<dynamics>
-					<spring_reference>0</spring_reference>
-					<spring_stiffness>0</spring_stiffness>
-					<damping>0</damping>
-					<friction>0</friction>
-				</dynamics>
-			</axis>
-			<physics>
-				<ode>
-					<limit>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</limit>
-					<suspension>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</suspension>
-				</ode>
-			</physics>
-		</joint>
-
-    <!-- Steering wheel link and joint... the code probably works without it as it is just visual-->
-    <link name="steering_wheel">
-			<pose>0.05 0.03 0 0 1.3089 3.1416</pose>
-			<inertial>
-				<pose>0 0 0 0 0 0</pose>
-				<mass>0.001</mass>
-				<inertia>
-					<ixx>8.5833e-09</ixx>
-					<ixy>0</ixy>
-					<ixz>0</ixz>
-					<iyy>8.5833e-09</iyy>
-					<iyz>0</iyz>
-					<izz>5e-09</izz>
-				</inertia>
-			</inertial>
-			<gravity>1</gravity>
-			<self_collide>0</self_collide>
-			<kinematic>0</kinematic>
-			<enable_wind>0</enable_wind>
-			<visual name="steering_wheel_visual">
-				<pose>0 0 0 0 0 0</pose>
-				<geometry>
-					<cylinder>
-						<radius>0.001</radius>
-						<length>0.01</length>
-					</cylinder>
-				</geometry>
-				<material>
-					<lighting>1</lighting>
-					<script>
-						<uri>file://media/materials/scripts/gazebo.material</uri>
-						<name>Gazebo/Grey</name>
-					</script>
-					<shader type="vertex">
-						<normal_map>__default__</normal_map>
-					</shader>
-					<ambient>0.3 0.3 0.3 1</ambient>
-					<diffuse>0.7 0.7 0.7 1</diffuse>
-					<specular>0.01 0.01 0.01 1</specular>
-					<emissive>0 0 0 1</emissive>
-				</material>
-				<transparency>0</transparency>
-				<cast_shadows>1</cast_shadows>
-			</visual>
-			<collision name="steering_wheel_collision">
-				<pose>0 0 0 0 0 0</pose>
-				<geometry>
-					<cylinder>
-						<radius>0.001</radius>
-						<length>0.01</length>
-					</cylinder>
-				</geometry>
-				<laser_retro>0</laser_retro>
-				<max_contacts>10</max_contacts>
-				<surface>
-					<friction>
-						<ode>
-							<mu>1</mu>
-							<mu2>1</mu2>
-							<fdir1>0 0 0</fdir1>
-							<slip1>0</slip1>
-							<slip2>0</slip2>
-						</ode>
-						<torsional>
-							<coefficient>1</coefficient>
-							<patch_radius>0</patch_radius>
-							<surface_radius>0</surface_radius>
-							<use_patch_radius>1</use_patch_radius>
-							<ode>
-								<slip>0</slip>
-							</ode>
-						</torsional>
-					</friction>
-					<bounce>
-						<restitution_coefficient>0</restitution_coefficient>
-						<threshold>1e+06</threshold>
-					</bounce>
-					<contact>
-						<collide_without_contact>0</collide_without_contact>
-						<collide_without_contact_bitmask>1</collide_without_contact_bitmask>
-						<collide_bitmask>1</collide_bitmask>
-						<ode>
-							<soft_cfm>0</soft_cfm>
-							<soft_erp>0.2</soft_erp>
-							<kp>1e+13</kp>
-							<kd>1</kd>
-							<max_vel>0.01</max_vel>
-							<min_depth>0</min_depth>
-						</ode>
-						<bullet>
-							<split_impulse>1</split_impulse>
-							<split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
-							<soft_cfm>0</soft_cfm>
-							<soft_erp>0.2</soft_erp>
-							<kp>1e+13</kp>
-							<kd>1</kd>
-						</bullet>
-					</contact>
-				</surface>
-			</collision>
-		</link>
-		<joint name="steering_joint" type="revolute">
+	</link>
+	<link name='steering_left_link'>
+		<pose>0.1185 0.072 0 1.5708 0 0</pose>
+		<inertial>
 			<pose>0 0 0 0 0 0</pose>
-			<parent>chassis_link</parent>
-			<child>steering_wheel</child>
-			<axis>
-				<xyz>-0.964118 0.000768 0.265556</xyz>
-				<use_parent_model_frame>0</use_parent_model_frame>
+			<mass>0.001</mass>
+			<inertia>
+				<ixx>8.5833e-09</ixx>
+				<ixy>0</ixy>
+				<ixz>0</ixz>
+				<iyy>8.5833e-09</iyy>
+				<iyz>0</iyz>
+				<izz>5e-09</izz>
+			</inertia>
+		</inertial>
+		<gravity>1</gravity>
+		<self_collide>0</self_collide>
+		<kinematic>0</kinematic>
+		<enable_wind>0</enable_wind>
+		<visual name='steering_left_visual'>
+			<pose>0 0 0 0 0 0</pose>
+			<geometry>
+				<cylinder>
+					<radius>0.001</radius>
+					<length>0.01</length>
+				</cylinder>
+			</geometry>
+			<material>
+				<lighting>1</lighting>
+				<script>
+					<uri>file://media/materials/scripts/gazebo.material</uri>
+					<name>Gazebo/Grey</name>
+				</script>
+				<shader type='vertex'>
+					<normal_map>__default__</normal_map>
+				</shader>
+				<ambient>0.3 0.3 0.3 1</ambient>
+				<diffuse>0.7 0.7 0.7 1</diffuse>
+				<specular>0.01 0.01 0.01 1</specular>
+				<emissive>0 0 0 1</emissive>
+			</material>
+			<transparency>0</transparency>
+			<cast_shadows>1</cast_shadows>
+		</visual>
+	</link>
+	<link name='steering_right_link'>
+		<pose>0.1185 -0.072 0 1.5708 0 0</pose>
+		<inertial>
+			<pose>0 0 0 0 0 0</pose>
+			<mass>0.001</mass>
+			<inertia>
+				<ixx>8.5833e-09</ixx>
+				<ixy>0</ixy>
+				<ixz>0</ixz>
+				<iyy>8.5833e-09</iyy>
+				<iyz>0</iyz>
+				<izz>5e-09</izz>
+			</inertia>
+		</inertial>
+		<gravity>1</gravity>
+		<self_collide>0</self_collide>
+		<kinematic>0</kinematic>
+		<enable_wind>0</enable_wind>
+		<visual name='steering_right_visual'>
+			<pose>0 0 0 0 0 0</pose>
+			<geometry>
+				<cylinder>
+					<radius>0.001</radius>
+					<length>0.01</length>
+				</cylinder>
+			</geometry>
+			<material>
+				<lighting>1</lighting>
+				<script>
+					<uri>file://media/materials/scripts/gazebo.material</uri>
+					<name>Gazebo/Grey</name>
+				</script>
+				<shader type='vertex'>
+					<normal_map>__default__</normal_map>
+				</shader>
+				<ambient>0.3 0.3 0.3 1</ambient>
+				<diffuse>0.7 0.7 0.7 1</diffuse>
+				<specular>0.01 0.01 0.01 1</specular>
+				<emissive>0 0 0 1</emissive>
+			</material>
+			<transparency>0</transparency>
+			<cast_shadows>1</cast_shadows>
+		</visual>
+	</link>
+	<!-- JOINTS -->
+	<!-- Back wheels to chassis joint -->
+	<joint name='body_joint' type='fixed'>
+		<parent>chassis_link</parent>
+		<child>car_body_link</child>
+		<physics>
+			<ode>
 				<limit>
-					<lower>-9.42477796077</lower>
-					<upper>9.42477796077</upper>
-					<effort>-1</effort>
-					<velocity>-1</velocity>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
 				</limit>
-				<dynamics>
-					<spring_reference>0</spring_reference>
-					<spring_stiffness>0</spring_stiffness>
-					<damping>0</damping>
-					<friction>0</friction>
-				</dynamics>
-			</axis>
-			<physics>
-				<ode>
-					<limit>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</limit>
-					<suspension>
-						<cfm>0</cfm>
-						<erp>0.2</erp>
-					</suspension>
-				</ode>
-			</physics>
-		</joint>
-    
-
-		<!-- Ackermann drive plugin -->
-    <plugin name='carlike_robot_plugin' filename='libcar_plugin.so'>
-      <wheelbase>0.26</wheelbase>
-      <axletrack>0.162</axletrack>
-      <wheelradius>0.0325</wheelradius>
-      <speed_wheel_joints> 
-        <front_wheel_joints>
-          <leftjoint>wheel_front_left_joint</leftjoint>
-          <rightjoint>wheel_front_right_joint</rightjoint>
-        </front_wheel_joints>
-        <rear_wheel_joints>
-          <leftjoint>wheel_back_left_joint</leftjoint>
-          <rightjoint>wheel_back_right_joint</rightjoint>
-        </rear_wheel_joints>
-        <kp>0.01</kp>
-        <ki>0.0</ki>
-        <kd>0.0</kd>
-      </speed_wheel_joints>
-      <steer_wheel_joints>
-        <leftjoint>steering_left_joint</leftjoint>
-        <rightjoint>steering_right_joint</rightjoint>
-        <kp>10.0</kp>
-        <ki>0.0</ki>
-        <kd>0.1</kd>
-      </steer_wheel_joints>
-      <initial_steer>0.0</initial_steer>
-      <initial_speed>0.0</initial_speed>
-      <robotNamespace>/</robotNamespace>
-    </plugin>
-
-	</model>
+				<suspension>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
+				</suspension>
+			</ode>
+		</physics>
+	</joint>
+	<joint name='wheel_back_left_joint' type='revolute'>
+		<parent>chassis_link</parent>
+		<child>wheel_back_left_link</child>
+		<axis>
+			<xyz>0 1 0</xyz>
+			<use_parent_model_frame>0</use_parent_model_frame>
+			<limit>
+				<lower>-1.79769e+308</lower>
+				<upper>1.79769e+308</upper>
+				<effort>-1</effort>
+				<velocity>-1</velocity>
+			</limit>
+			<dynamics>
+				<spring_reference>0</spring_reference>
+				<spring_stiffness>0</spring_stiffness>
+				<damping>0</damping>
+				<friction>0</friction>
+			</dynamics>
+		</axis>
+		<physics>
+			<ode>
+				<limit>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
+				</limit>
+				<suspension>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
+				</suspension>
+			</ode>
+		</physics>
+	</joint>
+	<joint name='wheel_back_right_joint' type='revolute'>
+		<parent>chassis_link</parent>
+		<child>wheel_back_right_link</child>
+		<axis>
+			<xyz>0 -1 0</xyz>
+			<use_parent_model_frame>0</use_parent_model_frame>
+			<limit>
+				<lower>-1.79769e+308</lower>
+				<upper>1.79769e+308</upper>
+				<effort>-1</effort>
+				<velocity>-1</velocity>
+			</limit>
+			<dynamics>
+				<spring_reference>0</spring_reference>
+				<spring_stiffness>0</spring_stiffness>
+				<damping>0</damping>
+				<friction>0</friction>
+			</dynamics>
+		</axis>
+		<physics>
+			<ode>
+				<limit>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
+				</limit>
+				<suspension>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
+				</suspension>
+			</ode>
+		</physics>
+	</joint>
+	<!-- BIG TODO: The ackerman plugin tends to break or make the car vibrate when steering due to the steering joints. FIX IT! -->
+	<!-- Steering to chassis joint -->
+	<joint name='steering_left_joint' type='revolute'>
+		<parent>chassis_link</parent>
+		<child>steering_left_link</child>
+		<axis>
+			<xyz>0 1 0</xyz>
+			<use_parent_model_frame>0</use_parent_model_frame>
+			<limit>
+				<lower>-0.523599</lower>
+				<!-- 30 degrees in radians -->
+				<upper>0.523599</upper>
+				<effort>-1</effort>
+				<velocity>-1</velocity>
+			</limit>
+			<dynamics>
+				<spring_reference>0</spring_reference>
+				<spring_stiffness>0</spring_stiffness>
+				<damping>0.01</damping>
+				<!-- a bit of damping helped -->
+				<friction>0</friction>
+				<!-- adding friction breaks the model -->
+			</dynamics>
+		</axis>
+		<physics>
+			<ode>
+				<limit>
+					<cfm>0</cfm>
+					<erp>0.1</erp>
+					<!-- 0.2 to 0.1 -->
+				</limit>
+				<suspension>
+					<cfm>0</cfm>
+					<erp>0.1</erp>
+					<!-- 0.2 to 0.1 -->
+				</suspension>
+			</ode>
+		</physics>
+	</joint>
+	<joint name='steering_right_joint' type='revolute'>
+		<parent>chassis_link</parent>
+		<child>steering_right_link</child>
+		<axis>
+			<xyz>0 1 0</xyz>
+			<use_parent_model_frame>0</use_parent_model_frame>
+			<limit>
+				<lower>-0.523599</lower>
+				<!-- 30 degrees in radians -->
+				<upper>0.523599</upper>
+				<effort>-1</effort>
+				<velocity>-1</velocity>
+			</limit>
+			<dynamics>
+				<spring_reference>0</spring_reference>
+				<spring_stiffness>0</spring_stiffness>
+				<damping>0.01</damping>
+				<!-- a bit of damping helped -->
+				<friction>0</friction>
+				<!-- adding friction breaks the model -->
+			</dynamics>
+		</axis>
+		<physics>
+			<ode>
+				<limit>
+					<cfm>0</cfm>
+					<erp>0.1</erp>
+					<!-- 0.2 to 0.1 -->
+				</limit>
+				<suspension>
+					<cfm>0</cfm>
+					<erp>0.1</erp>
+					<!-- 0.2 to 0.1 -->
+				</suspension>
+			</ode>
+		</physics>
+	</joint>
+	<!-- Front wheels to steering joint -->
+	<joint name='wheel_front_left_joint' type='revolute'>
+		<parent>steering_left_link</parent>
+		<child>wheel_front_left_link</child>
+		<axis>
+			<xyz>0 1 0</xyz>
+			<use_parent_model_frame>0</use_parent_model_frame>
+			<limit>
+				<lower>-1.79769e+308</lower>
+				<upper>1.79769e+308</upper>
+				<effort>-1</effort>
+				<velocity>-1</velocity>
+			</limit>
+			<dynamics>
+				<spring_reference>0</spring_reference>
+				<spring_stiffness>0</spring_stiffness>
+				<damping>0</damping>
+				<friction>0</friction>
+			</dynamics>
+		</axis>
+		<physics>
+			<ode>
+				<limit>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
+				</limit>
+				<suspension>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
+				</suspension>
+			</ode>
+		</physics>
+	</joint>
+	<joint name='wheel_front_right_joint' type='revolute'>
+		<parent>steering_right_link</parent>
+		<child>wheel_front_right_link</child>
+		<axis>
+			<xyz>0 -1 0</xyz>
+			<use_parent_model_frame>0</use_parent_model_frame>
+			<limit>
+				<lower>-1.79769e+308</lower>
+				<upper>1.79769e+308</upper>
+				<effort>-1</effort>
+				<velocity>-1</velocity>
+			</limit>
+			<dynamics>
+				<spring_reference>0</spring_reference>
+				<spring_stiffness>0</spring_stiffness>
+				<damping>0</damping>
+				<friction>0</friction>
+			</dynamics>
+		</axis>
+		<physics>
+			<ode>
+				<limit>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
+				</limit>
+				<suspension>
+					<cfm>0</cfm>
+					<erp>0.2</erp>
+				</suspension>
+			</ode>
+		</physics>
+	</joint>
+	<!-- Ackermann drive plugin -->
+	<plugin name='carlike_robot_plugin' filename='libcar_plugin.so'>
+		<wheelbase>0.26</wheelbase>
+		<axletrack>0.162</axletrack>
+		<wheelradius>0.0325</wheelradius>
+		<speed_wheel_joints>
+			<front_wheel_joints>
+				<leftjoint>wheel_front_left_joint</leftjoint>
+				<rightjoint>wheel_front_right_joint</rightjoint>
+			</front_wheel_joints>
+			<rear_wheel_joints>
+				<leftjoint>wheel_back_left_joint</leftjoint>
+				<rightjoint>wheel_back_right_joint</rightjoint>
+			</rear_wheel_joints>
+			<kp>0.01</kp>
+			<ki>0.0</ki>
+			<kd>0.0</kd>
+		</speed_wheel_joints>
+		<steer_wheel_joints>
+			<leftjoint>steering_left_joint</leftjoint>
+			<rightjoint>steering_right_joint</rightjoint>
+			<kp>10.0</kp>
+			<ki>0.0</ki>
+			<kd>0.1</kd>
+		</steer_wheel_joints>
+		<initial_steer>0.0</initial_steer>
+		<initial_speed>0.0</initial_speed>
+		<robotNamespace>/</robotNamespace>
+	</plugin>
+</model>
 </sdf>
