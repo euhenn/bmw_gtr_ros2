@@ -1,6 +1,7 @@
 #include "gps_plugin.hpp"
 
 #define DEBUG false
+#define NOISE_ON_MEASUREMENTS false
 
 using namespace std::chrono_literals;
 
@@ -13,7 +14,7 @@ namespace gazebo
                      uniform_distribution_(0.0, 1.0),
                      prob_of_starting_losing_pkgs_(0.0),
                      max_time_pkg_loss_(0.0),
-                     gps_delay_(5)
+                     gps_delay_(0)
         {
         }
 
@@ -58,9 +59,20 @@ namespace gazebo
             double true_x = this->m_model->RelativePose().Pos().X();
             double true_y = std::abs(this->m_model->RelativePose().Pos().Y());
 
-            this->gps_msg_.pos_x = true_x + gps_noise_distribution_(random_generator_);
-            this->gps_msg_.pos_y = true_y + gps_noise_distribution_(random_generator_);
-            this->gps_msg_.yaw = this->m_model->RelativePose().Rot().Yaw();
+            if (NOISE_ON_MEASUREMENTS)
+            {
+                // Simulate GPS noise
+                this->gps_msg_.pos_x = true_x + gps_noise_distribution_(random_generator_);
+                this->gps_msg_.pos_y = true_y + gps_noise_distribution_(random_generator_);
+                this->gps_msg_.yaw = this->m_model->RelativePose().Rot().Yaw();
+            }
+            else
+            {
+                // No noise on measurements
+                this->gps_msg_.pos_x = true_x;
+                this->gps_msg_.pos_y = true_y;
+                this->gps_msg_.yaw = this->m_model->RelativePose().Rot().Yaw();
+            }
             this->gps_msg_.timestamp = time_stamp;
 
             // Add to history
