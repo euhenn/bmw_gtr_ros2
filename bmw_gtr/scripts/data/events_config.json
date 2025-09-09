@@ -1,0 +1,54 @@
+{
+    "events": {
+
+      "ROUNDABOUT_EXIT_DOWN": {
+        "STARTING_COORDS": [17.5, 9.6],
+        "RANDOM_START": {
+          "CHECKPOINTS": [472, 434, 500, 133, 91, 466, 323, 149],
+          "OVERTAKE_COUNTER": [0, 12, 13]
+        },
+        "SPEED_CHALLENGE": {
+          "CHECKPOINTS": [472, 110, 430, 280, 160, 140, 170, 180, 410, 500],
+          "OVERTAKE_COUNTER": [3, 8, 10, 20]
+        },
+        "STANDARD_START": {
+          "CHECKPOINTS": [472, 110, 430, 280, 160, 140, 170, 180, 410, 500],
+          "OVERTAKE_COUNTER": [3, 8, 10, 20]
+        }
+      },
+
+      "PARKING": {
+        "STARTING_COORDS": [8.07, 0.72],
+        "RANDOM_START": {
+          "CHECKPOINTS": [472, 466, 323, 149],
+          "OVERTAKE_COUNTER": [4, 5]
+        },
+        "SPEED_CHALLENGE": {
+          "CHECKPOINTS": [472, 110, 430, 280, 160, 140, 170, 180, 410, 500],
+          "OVERTAKE_COUNTER": [3, 8, 10, 20]
+        },
+        "STANDARD_START": {
+          "CHECKPOINTS": [472, 110, 430, 280, 160, 140, 170, 180, 410, 500],
+          "OVERTAKE_COUNTER": [3, 8, 10, 20]
+        }
+      },
+
+      "ROUNDABOUT_ENTER_UP": {
+        "STARTING_COORDS": [17.5, 13.73],
+        "RANDOM_START": {
+          "CHECKPOINTS": [472, 149, 125, 154, 192, 434, 500],
+          "OVERTAKE_COUNTER": [8, 10]
+        },
+        "SPEED_CHALLENGE": {
+          "CHECKPOINTS": [472, 174, 143],
+          "OVERTAKE_COUNTER": [3, 8, 10, 20]
+        },
+        "STANDARD_START": {
+          "CHECKPOINTS": [472, 149, 91, 466, 434, 500, 125, 154, 192],
+          "OVERTAKE_COUNTER": [18]
+        }
+      }
+
+    }
+  }
+  

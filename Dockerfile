@@ -70,4 +70,32 @@ RUN echo 'alias dei_sim="clear && colcon build && source install/setup.bash && r
     echo 'alias build_and_source="clear && colcon build && source install/setup.bash"' >> ~/.bashrc && \
     echo 'alias keyboard="clear && source install/setup.bash && ros2 run autocar_nav keyboard_control.py"' >> ~/.bashrc
     
+# CASADI AND ACADOS    
+WORKDIR /
+
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages
+RUN pip3 install casadi numpy
+
+# Clone and build acados
+RUN git clone https://github.com/acados/acados.git /opt/acados \
+    && cd /opt/acados \
+    && git submodule update --init --recursive \
+    && mkdir -p build \
+    && cd build \
+    && cmake -DACADOS_WITH_QPOASES=ON .. \
+    && make install -j4
+
+# Set environment variables
+ENV ACADOS_SOURCE_DIR=/opt/acados
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+# Install Python interface
+RUN pip3 install -e ${ACADOS_SOURCE_DIR}/interfaces/acados_template
+    
+WORKDIR /ros2_ws
+    
 CMD ["bash"]
