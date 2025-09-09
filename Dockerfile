@@ -96,6 +96,8 @@ ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 # Install Python interface
 RUN pip3 install -e ${ACADOS_SOURCE_DIR}/interfaces/acados_template
     
+RUN pip3 install networkx pyclothoids
+
 WORKDIR /ros2_ws
     
 CMD ["bash"]
