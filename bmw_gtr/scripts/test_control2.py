@@ -3,6 +3,7 @@ import rclpy
 from automobile_data_simulator import AutomobileDataSimulator
 import time
 import sys
+import mpc_kin_model
 
 
 class CarControllerNode(AutomobileDataSimulator):
@@ -35,7 +36,7 @@ class CarControllerNode(AutomobileDataSimulator):
 
         start_time = time.time()
 
-        # Example: simple oscillation of steering to show it works
+        # Controller to implement
         self.current_steering = 15.0 * \
             (1 if int(time.time()) % 4 < 2 else -1)
 
