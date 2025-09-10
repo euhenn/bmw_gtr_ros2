@@ -1,4 +1,4 @@
-# Use the official Ubuntu Focal image as base (ROS Foxy requirement)
+
 FROM ubuntu:20.04
 
 # Set environment variables to avoid interactive prompts
@@ -12,7 +12,7 @@ RUN apt-get update && \
     locale-gen en_SG en_SG.UTF-8 && \
     update-locale LC_ALL=en_SG.UTF-8 LANG=en_SG.UTF-8
 
-# Install base dependencies
+# Base dependencies
 RUN apt-get update && \
     apt-get install -y \
     curl \
@@ -24,7 +24,8 @@ RUN apt-get update && \
 
 # Add ROS 2 repository
 RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+    | tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
 # Install ROS 2 Foxy and colcon
 RUN apt-get update && \
@@ -33,7 +34,7 @@ RUN apt-get update && \
     python3-colcon-common-extensions \
     ros-foxy-gazebo-ros-pkgs \
     ros-foxy-joint-state-publisher \
-    ros-foxy-vision-msgs &&\
+    ros-foxy-vision-msgs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -42,13 +43,12 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-
-# A package of small utilities that use the proc file-system. Used for killall function that kills all processes with a given name.
+# Utilities (killall, etc.)
 RUN apt-get update && \
     apt-get install -y psmisc && \
     rm -rf /var/lib/apt/lists/*
 
-# Setup environment
+# Ros environment
 RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
     echo "source /usr/share/gazebo/setup.sh" >> ~/.bashrc && \
     echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> ~/.bashrc && \
@@ -56,48 +56,54 @@ RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
 
 WORKDIR /ros2_ws
 
+# Extra dependencies
 RUN apt-get update && \
     apt-get install -y \
     bluez \
     bluez-tools \
     python3-evdev \
-    python3-pyudev &&\
-    apt-get clean &&\
+    python3-pyudev && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-
+# Handy aliases
 RUN echo 'alias dei_sim="clear && colcon build && source install/setup.bash && ros2 launch launches dei_launch.py"' >> ~/.bashrc && \
     echo 'alias build_and_source="clear && colcon build && source install/setup.bash"' >> ~/.bashrc && \
     echo 'alias keyboard="clear && source install/setup.bash && ros2 run autocar_nav keyboard_control.py"' >> ~/.bashrc
-    
-# CASADI AND ACADOS    
+
+# ------------------------
+# CASADI + ACADOS
+# ------------------------
 WORKDIR /
 
 RUN apt-get update && apt-get install -y \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+    git cmake build-essential pkg-config && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Python packages
-RUN pip3 install casadi numpy
+RUN pip3 install casadi numpy networkx pyclothoids
 
 # Clone and build acados
-RUN git clone https://github.com/acados/acados.git /opt/acados \
-    && cd /opt/acados \
-    && git submodule update --init --recursive \
-    && mkdir -p build \
-    && cd build \
-    && cmake -DACADOS_WITH_QPOASES=ON .. \
-    && make install -j4
+RUN git clone https://github.com/acados/acados.git /opt/acados && \
+    cd /opt/acados && \
+    git submodule update --init --recursive && \
+    mkdir -p build && cd build && \
+    cmake -DACADOS_WITH_QPOASES=ON .. && \
+    make install -j$(nproc)
 
-# Set environment variables
+# Install Rust + build t_renderer locally (I did it to avoid GLIBC issues)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+    /root/.cargo/bin/cargo install --git https://github.com/acados/tera_renderer.git --root /opt/acados
+
+# Environment variables
 ENV ACADOS_SOURCE_DIR=/opt/acados
-ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+ENV PATH=/opt/acados/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/acados/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
-# Install Python interface
+# Python interface
 RUN pip3 install -e ${ACADOS_SOURCE_DIR}/interfaces/acados_template
-    
-RUN pip3 install networkx pyclothoids
 
+# Go back to workspace
 WORKDIR /ros2_ws
-    
+
 CMD ["bash"]

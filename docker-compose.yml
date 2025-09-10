@@ -6,7 +6,9 @@ services:
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
-      
+      - ACADOS_SOURCE_DIR=/opt/acados
+      - LD_LIBRARY_PATH=/opt/acados/lib:/usr/local/lib:$LD_LIBRARY_PATH
+
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ./bmw_gtr:/ros2_ws/src/bmw_gtr  
