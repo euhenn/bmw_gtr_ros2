@@ -27,8 +27,7 @@ venv.bak/
 
 # Acados generated files
 c_generated_code/
-acados_ocp_kin.json
-acados_sim_kin.json
+acados_*
 
 # Visual Studio Code
 #  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
