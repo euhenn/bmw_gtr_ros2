@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 import rclpy
 from automobile_data_simulator import AutomobileDataSimulator
+from mpc_kin_model import MPC_KinematicBicycle
+from reference_trajectory_generation import TrajectoryGeneration
 import time
 import sys
-import mpc_kin_model
+
 
 
 class CarControllerNode(AutomobileDataSimulator):
@@ -29,6 +31,12 @@ class CarControllerNode(AutomobileDataSimulator):
         # Error tracking
         self.timeout_error_occurred = False
 
+
+        # MPC
+        self.mpc = MPC_KinematicBicycle(dt_ocp=mpc_dt, N_horizon=mpc_horizon)
+        self.real_track = TrajectoryGeneration()
+
+
     def control_loop(self):
         """Main control loop running at fixed time steps"""
         if self.timeout_error_occurred:
@@ -37,11 +45,9 @@ class CarControllerNode(AutomobileDataSimulator):
         start_time = time.time()
 
         # Controller to implement
-        self.current_steering = 15.0 * \
-            (1 if int(time.time()) % 4 < 2 else -1)
 
-        # Keep speed constant
-        self.current_speed = 1.0
+        # Keep speed constant - not sure if it is possible with this kind of implementation 
+        #self.current_speed = 1.0
 
         # Apply current controls
         self.drive_speed(self.current_speed)
