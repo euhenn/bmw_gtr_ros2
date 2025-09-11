@@ -2,33 +2,67 @@
 
 # ROS2 foxy simulation with ackerman model car
 
+## Docker
+### 1. Build and Launch the Docker Container
 
 ```bash
-ros2 topic pub /automobile/command std_msgs/msg/String '{"data":"{\"action\": \"1\", \"speed\":0.0}"}'
-```
-
-
-To build the image do 
-```bash
+cd bmw_gtr_ros2
 docker compose up -d
 ```
- inside the folder with dockerfile
 
+### 2. Access the Container
 ```bash
-docker exec -it ros2-foxy-car bash
+# From the same directory as docker-compose.yml
+docker compose exec ros2-car bash
+
+# From any directory (using container name)
+docker exec -it ros2-car bash
 ```
- to open the container
+Note, `docker compose` commands work only in the directories containing the compose file.
 
-once inside the container build the workspace with 
 
+### #. Extra docker commands if needed 
+```bash
+
+# Stop the container
+docker stop ros2-car
+
+# Delete the container
+docker rm ros2-car
+
+# Force to rebuild
+docker compose up -d --build
+
+# Check open containers
+docker ps -a
+
+# Check images availabel
+docker images
+
+# Remove images
+docker rmi IMAGENAME
+```
+Note, `docker compose` commands work only in the directories containing the compose file.
+
+
+## Ros2 workspace
+
+Build the project, must be done always in the folder /ros2_ws, and source the setup.
 
 ```bash
+cd /ros2_ws
 colcon build && source install/setup.bash
 ```
 
-
-and run the launcher
+## Gazebo simulation
+Launch gazebo simulation scenario 
 ```bash
-ros2 launch bmw_gtr simulator.launch
+ros2 launch bmw_gtr simulator.launch.pyh
+```
+if you need to remove the car from the word and spawn it at a certain coordinates use this launch file:
+```bash
+ros2 launch bmw_gtr spawn_car.launch.py
 ```
 
+## Main brain
+Source the ros project as we need in order to be able to use the ros topics.
