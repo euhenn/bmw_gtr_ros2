@@ -12,7 +12,7 @@ from time import time
 import helper_functions as hf
 from automobile_data_interface import Automobile_Data
 
-REALISTIC = True
+REALISTIC = False
 
 ENCODER_TIMER = 0.01  # frequency of encoder reading
 STEER_UPDATE_FREQ = 50.0 if REALISTIC else 150.0
