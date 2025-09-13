@@ -57,7 +57,7 @@ colcon build && source install/setup.bash
 ## Gazebo simulation
 Launch gazebo simulation scenario 
 ```bash
-ros2 launch bmw_gtr simulator.launch.pyh
+ros2 launch bmw_gtr simulator.launch.py
 ```
 if you need to remove the car from the word and spawn it at a certain coordinates use this launch file:
 ```bash
