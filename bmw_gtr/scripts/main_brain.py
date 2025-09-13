@@ -20,10 +20,11 @@ class CarControllerNode(Node):
             trig_gps=True
         )
 
-        # Control step (seconds)
-        self.dt = 0.1   # MPC update frequency (2 Hz) # THESE TWO MUST BE THE SAME
         # MPC setup
-        self.mpc = MPC_KinematicBicycle(dt_ocp=self.dt, N_horizon=10)
+        self.mpc = MPC_KinematicBicycle(dt_ocp=0.2, N_horizon=20)
+
+        # Control step (seconds)
+        self.dt = 0.5   # MPC update frequency (2 Hz)
 
         # Trajectory index
         self.idx = 0
@@ -49,6 +50,7 @@ class CarControllerNode(Node):
         y = float(self.car.y_true)
         yaw = np.deg2rad(float(self.car.yaw_true))
         v = float(self.car.filtered_encoder_velocity)
+
         return np.array([x, y, yaw, self.v_cmd])
 
     def apply_control(self, v, delta):
@@ -56,36 +58,22 @@ class CarControllerNode(Node):
         self.car.drive_speed(v)
         self.car.drive_angle(np.rad2deg(delta))
 
-    def find_closest_index(self, x, y):
-        """Find the closest trajectory index to the current position."""
-        traj = self.mpc.trajectory
-        diffs = traj[:2, :].T - np.array([x, y])  # shape (N,2)
-        dists = np.linalg.norm(diffs, axis=1)
-        return int(np.argmin(dists))
-
     def run(self):
-        """Main MPC control loop with look-ahead indexing."""
+        """Main MPC control loop (runs slower than simulator spin)."""
         next_time = time.time()
-        lookahead_steps = 5   # number of steps ahead in trajectory (~0.5s if dt=0.1)
-        
         while rclpy.ok():
+            start_time = time.time()
+
+            # Current state (already updated in background)
             state = self.get_current_state()
-            x, y, yaw, _ = state
 
-            # --- Compute trajectory index dynamically ---
-            closest_idx = self.find_closest_index(x, y)
-            self.idx = min(
-                closest_idx + lookahead_steps,
-                self.mpc.trajectory.shape[1] - self.mpc.N_horizon - 1
-            )
-
-            # Check stop condition
-            if x > 10 and y < 0:
-                self.get_logger().info("Stop condition reached (x>10, y<0).")
+            # Check if trajectory finished
+            if self.idx >= self.mpc.trajectory.shape[1] - self.mpc.N_horizon - 1:
+                self.get_logger().info("End of trajectory reached")
                 self.apply_control(0.0, 0.0)
                 break
 
-            # Get reference horizon
+            # Get reference segment for horizon
             traj_horizon = self.mpc.get_reference_segment(self.idx)
 
             # Solve MPC
@@ -96,12 +84,14 @@ class CarControllerNode(Node):
             # Apply control
             self.apply_control(self.v_cmd, delta_cmd)
 
-            # Log
+            # Logging
             self.get_logger().info(
-                f"Step {self.idx} | Pos: ({x:.2f}, {y:.2f}) "
-                f"Yaw: {np.rad2deg(yaw):.2f}° | Vel: {state[3]:.2f} m/s | "
+                f"Step {self.idx} | Pos: ({state[0]:.2f}, {state[1]:.2f}) "
+                f"Yaw: {np.rad2deg(state[2]):.2f}° | Vel: {state[3]:.2f} m/s | "
                 f"Cmd -> v: {self.v_cmd:.2f} m/s, δ: {np.rad2deg(delta_cmd):.1f}°"
             )
+
+            self.idx += 1
 
             # --- Real-time wait ---
             next_time += self.dt
@@ -110,7 +100,6 @@ class CarControllerNode(Node):
                 time.sleep(sleep_time)
             else:
                 self.get_logger().warn(f"Loop overran by {-sleep_time:.3f}s")
-
 
     def shutdown(self):
         """Stop everything cleanly."""
