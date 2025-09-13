@@ -4,106 +4,98 @@ from rclpy.node import Node
 from automobile_data_simulator import AutomobileDataSimulator
 from mpc_kin import MPC_KinematicBicycle
 import numpy as np
-import curses
 import time
-from acados_template import AcadosOcpSolver
 
-mpc_dt = 0.1
-mpc_horizon = 20
+
 
 class CarControllerNode(Node):
-    def __init__(self, stdscr):
+    def __init__(self):
         super().__init__('car_controller_node')
-        self.car = AutomobileDataSimulator(
-            trig_control=True,
-            trig_bno=True,
-            trig_enc=True,
-            trig_gps=True
-        )
+
+        # Init simulator
+        self.car = AutomobileDataSimulator()
 
         # MPC setup
-        self.mpc = MPC_KinematicBicycle(dt_ocp=mpc_dt, N_horizon=mpc_horizon)
-        ocp = self.mpc.CreateOcpSolver_TimeKin()
-        self.mpc_solver = AcadosOcpSolver(ocp, json_file="acados_ocp_nonlinear.json")
+        self.mpc = MPC_KinematicBicycle(dt_ocp=0.1, N_horizon=20)
 
-        self.full_traj = self.mpc.trajectory
-        self.traj_length = self.full_traj.shape[1]
-        self.N_horizon = self.mpc.N_horizon
+        # Control step (seconds)
+        self.dt = 0.1  
 
-        self.prev_u = np.array([0.0, 0.0])
-        self.control_interval = 0.1
+        # Trajectory index
+        self.idx = 0
 
-        self.stdscr = stdscr
-        curses.curs_set(0)
+        self.v_cmd = 0.0
 
-    def control_loop(self):
-        idx = 0
-        while rclpy.ok() and idx + self.N_horizon + 1 < self.traj_length:
+        self.get_logger().info("Car Controller Node started with fixed-step real-time loop.")
+
+    def get_current_state(self):
+        """Get current vehicle state from simulator."""
+        x = float(self.car.x_true)
+        y = float(self.car.y_true)
+        yaw = np.deg2rad(float(self.car.yaw_true))
+        v = float(self.car.filtered_encoder_velocity)
+        return np.array([x, y, yaw, self.v_cmd])
+
+    def apply_control(self, v, delta):
+        """Send control commands to simulator (or Gazebo if mapped)."""
+        self.car.drive_speed(v)
+        self.car.drive_angle(np.rad2deg(delta))
+        
+
+    def run(self):
+        """Main real-time loop."""
+        next_time = time.time()
+        while rclpy.ok():
             start_time = time.time()
 
-            # Current state from simulator
-            x, y = float(self.car.x_true), float(self.car.y_true)
-            yaw_rad = np.deg2rad(float(self.car.yaw_true))
-            x0 = np.array([x, y, yaw_rad])
+            # Current state
+            state = self.get_current_state()
 
-            # Set reference trajectory for horizon
-            traj_horizon = self.full_traj[:, idx:idx+self.N_horizon+1]
-            for j in range(self.N_horizon):
-                if idx + j < self.traj_length:
-                    stage_ref = self.full_traj[:, idx + j]
-                else:
-                    stage_ref = self.full_traj[:, -1]
-                yref = np.concatenate([stage_ref, np.array([0.0, 0.0])])
-                self.mpc_solver.set(j, "yref", yref)
+            # Check if we have enough trajectory points left
+            if self.idx >= self.mpc.trajectory.shape[1] - self.mpc.N_horizon - 1:
+                self.get_logger().info("End of trajectory reached")
+                # Stop the car
+                self.apply_control(0.0, 0.0)
+                break
 
-            # terminal yref
-            idx_term = min(idx + self.N_horizon, self.traj_length - 1)
-            yref_e = self.full_traj[:2, idx_term]
-            self.mpc_solver.set(self.N_horizon, "yref", yref_e)
+            # Get reference segment for the horizon
+            traj_horizon = self.mpc.get_reference_segment(self.idx)
 
-            # initial state constraint
-            self.mpc_solver.set(0, "lbx", x0)
-            self.mpc_solver.set(0, "ubx", x0)
+            # Solve MPC for optimal control
+            self.v_cmd, delta_cmd = self.mpc.solve(state[:3], traj_horizon)  # Only pass x, y, yaw to MPC
 
-            # Solve OCP
-            try:
-                status = self.mpc_solver.solve()
-                if status not in [0, 2]:
-                    commanded_v, commanded_delta = 0.0, 0.0
-                else:
-                    u0 = self.mpc_solver.get(0, "u")
-                    commanded_v, commanded_delta = float(u0[0]), float(u0[1])
-            except Exception:
-                commanded_v, commanded_delta = 0.0, 0.0
+            # Apply control
+            self.apply_control(self.v_cmd, delta_cmd)
 
-            # Apply command
-            self.car.drive_speed(commanded_v)
-            self.car.drive_angle(np.rad2deg(commanded_delta))
+            # Logging
+            self.get_logger().info(
+                f"Step {self.idx} | Pos: ({state[0]:.2f}, {state[1]:.2f}) "
+                f"Yaw: {np.rad2deg(state[2]):.2f}° | Vel: {state[3]:.2f} m/s | "
+                f"Cmd -> v: {self.v_cmd:.2f} m/s, δ: {np.rad2deg(delta_cmd):.1f}°"
+            )
 
-            # Refresh terminal dashboard
-            self.stdscr.erase()
-            self.stdscr.addstr(0, 0, "Car Controller Dashboard")
-            self.stdscr.addstr(2, 0, f"Position: ({x:.2f}, {y:.2f})")
-            self.stdscr.addstr(3, 0, f"Yaw: {np.rad2deg(yaw_rad):.2f}°")
-            self.stdscr.addstr(5, 0, f"Commanded Speed: {commanded_v:.2f} m/s")
-            self.stdscr.addstr(6, 0, f"Commanded Steering: {np.rad2deg(commanded_delta):.2f}°")
-            self.stdscr.addstr(8, 0, f"Trajectory Index: {idx}")
-            self.stdscr.refresh()
+            self.idx += 1
 
-            # Wait until next cycle
-            elapsed = time.time() - start_time
-            time.sleep(max(0.0, self.control_interval - elapsed))
-            idx += 1
+            # --- Real-time wait ---
+            next_time += self.dt
+            sleep_time = next_time - time.time()
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+            else:
+                self.get_logger().warn(f"Loop overran by {-sleep_time:.3f}s")
 
-def main(stdscr):
+def main():
     rclpy.init()
-    node = CarControllerNode(stdscr)
+    node = CarControllerNode()
     try:
-        node.control_loop()
+        node.run()  # runs fixed real-time loop
     except KeyboardInterrupt:
         pass
-    node.destroy_node()
-    rclpy.shutdown()
+    finally:
+        # Ensure we stop the car when exiting
+        node.apply_control(0.0, 0.0)
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
-    curses.wrapper(main)
+    main()
