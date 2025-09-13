@@ -168,12 +168,12 @@ class MPC_KinematicBicycle:
 
 if __name__ == "__main__":
     mpc = MPC_KinematicBicycle()
-    x0 = np.array([0.0, 0.0, 0.0])
+    x0 = np.array([0.406, 6.56, -1.57])
     
     # Debug: Check trajectory shape
     print(f"Trajectory shape: {mpc.trajectory.shape}")
     
-    traj = mpc.get_reference_segment(0)
+    traj = mpc.get_reference_segment(1)
     print(f"Reference segment shape: {traj.shape}")
     
     v_cmd, delta_cmd = mpc.solve(x0, traj)
