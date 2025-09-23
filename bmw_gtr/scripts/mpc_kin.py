@@ -85,8 +85,8 @@ class MPC_KinematicBicycle:
         ocp.cost.yref_e = np.zeros((ny_e,))
         ocp.model.cost_y_expr_e = vertcat(model.x[:2])
 
-        ocp.constraints.lbu = np.array([-1.0, -np.deg2rad(25)])
-        ocp.constraints.ubu = np.array([1.0, np.deg2rad(25)])
+        ocp.constraints.lbu = np.array([-2.0, -np.deg2rad(28)])
+        ocp.constraints.ubu = np.array([2.0, np.deg2rad(28)])
         ocp.constraints.idxbu = np.array([0, 1])
         ocp.constraints.x0 = self.X0
 
@@ -124,31 +124,56 @@ class MPC_KinematicBicycle:
         self.solver.set(self.N_horizon, "yref", yref_e)
 
     def solve(self, state, traj):
+        # Debug
+        #print("DEBUG solve: state:", state)
+        #print("DEBUG solve: traj shape:", traj.shape)
+
         self.set_initial_state(state)
         self.set_reference(traj)
 
+        # show first few yrefs
+        try:
+            print("DEBUG yref[0]:", self.solver.get(0, "yref"))
+            print("DEBUG yref[1]:", self.solver.get(1, "yref"))
+        except Exception:
+            pass
+
+        # simple warm start: repeat previous u (or zeros) across horizon
+        for j in range(self.N_horizon):
+            try:
+                self.solver.set(j, "u", np.array([self.v_cmd, 0.0]))
+            except Exception:
+                pass
+            
+
         status = self.solver.solve()
+        #print("DEBUG acados status:", status)
+
+        u0 = self.solver.get(0, "u")
+        #print("DEBUG u0:", u0)
+
         if status not in [0, 2]:
             raise RuntimeError(f"acados OCP solve failed with status {status}")
 
-        u0 = self.solver.get(0, "u")
         return u0[0], u0[1]
+
 
     def get_reference_segment(self, idx):
         start = idx
         end = idx + self.N_horizon + 1
         if end > self.trajectory.shape[1]:
             end = self.trajectory.shape[1]
+        print(f"DEBUG get_reference_segment: start={start}, end={end}, trajectory[:,start] = {self.trajectory[:,start]}")
         return self.trajectory[:, start:end]
 
 if __name__ == "__main__":
     mpc = MPC_KinematicBicycle()
-    x0 = np.array([0.0, 0.0, 0.0])
+    x0 = np.array([0.406, 6.56, -1.57])
     
     # Debug: Check trajectory shape
     print(f"Trajectory shape: {mpc.trajectory.shape}")
     
-    traj = mpc.get_reference_segment(0)
+    traj = mpc.get_reference_segment(1)
     print(f"Reference segment shape: {traj.shape}")
     
     v_cmd, delta_cmd = mpc.solve(x0, traj)

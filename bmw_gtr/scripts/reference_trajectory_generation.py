@@ -25,16 +25,16 @@ class TrajectoryGeneration:
         trajectory = np.array(path_with_yaw, dtype=np.float32)
 
         # Draw the path
-        self.planner.draw_path()
+        #self.planner.draw_path()
 
         # Scale down the image before displaying
-        scale = 0.25  # 50% of original size
-        resized_map = cv.resize(self.planner.map, None, fx=scale, fy=scale, interpolation=cv.INTER_AREA)
+        #scale = 0.25  # 50% of original size
+        #resized_map = cv.resize(self.planner.map, None, fx=scale, fy=scale, interpolation=cv.INTER_AREA)
 
         # Show the scaled image
-        cv.imshow("Generated Path", resized_map)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
+        #cv.imshow("Generated Path", resized_map)
+        #cv.waitKey(0)
+        #cv.destroyAllWindows()
 
         return trajectory
 
@@ -48,10 +48,10 @@ class TrajectoryGeneration:
         for i in range(N):
             x[i], y[i], theta[i] = trajectory[i]
             theta[i] = np.deg2rad(theta[i])
-            print(f"Row {i}: x={x}, y={y}, theta={theta}")
+            #print(f"Row {i}: x={x}, y={y}, theta={theta}")
         for j in range(N_horizon):
             x[N+j], y[N+j], theta[N+j] = trajectory[N-1]
-            print(f"Row {i}: x={x}, y={y}, theta={theta}")
+            #print(f"Row {i}: x={x}, y={y}, theta={theta}")
         
         y_ref = np.stack((x, y, theta))
         print(y_ref.shape)
@@ -65,10 +65,10 @@ class TrajectoryGeneration:
         for i in range(N):
             x[i], y[i], theta[i] = self.trajectory[i]
             theta[i] = np.deg2rad(theta[i])
-            print(f"Row {i}: x={x}, y={y}, theta={theta}")
+            #print(f"Row {i}: x={x}, y={y}, theta={theta}")
         for j in range(N_horizon):
             x[N+j], y[N+j], theta[N+j] = self.trajectory[N-1]
-            print(f"Row {i}: x={x}, y={y}, theta={theta}")
+            #print(f"Row {i}: x={x}, y={y}, theta={theta}")
         
         y_ref = np.stack((x, y, theta))
         print(y_ref.shape)
