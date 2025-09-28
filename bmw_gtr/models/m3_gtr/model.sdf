@@ -129,7 +129,7 @@
         		  <camera_name>camera_top</camera_name>
         		  <frame_name>chassis_link</frame_name>
         		  <hack_baseline>0.07</hack_baseline>
-        		  <update_rate>30.0</update_rate>
+        		  <update_rate>120.0</update_rate>
         		</plugin>
       		</sensor>
       		<sensor name="camera_sensor" type="camera">
