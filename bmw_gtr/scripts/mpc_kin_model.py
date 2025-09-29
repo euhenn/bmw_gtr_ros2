@@ -8,15 +8,15 @@ from reference_trajectory_generation import *
 
 # ------------------ INITIAL CONFIGURATION ------------------
 dt_ocp = 0.1
-N_horizon = 20
+N_horizon = 30
 Tf =N_horizon * dt_ocp
-
-real_track = TimeTraj()
-trajectory, N = real_track.full_reference(N_horizon)
+ds = 0.
+real_track = TrajectoryGeneration()
+trajectory, N = real_track.time_reference(N_horizon, ds, [230,307, 377,418])
 X0 = trajectory[:,0]
 
-T = int(N*dt_ocp)
-dt_sim = 0.02
+T = N*dt_ocp
+dt_sim = 0.05
 Nsim = int(T / dt_sim)
 
 lf =0.13  # distance from CoG to front wheels
@@ -126,7 +126,7 @@ def ClosedLoopSimulationSIM():# LOOP OVER N SIM, UPDATING N OCP ACCORDINGLY
     for stage in range(N_horizon + 1):
         acados_ocp_solver.set(stage, "x", xcurrent)
     for stage in range(N_horizon):
-        acados_ocp_solver.set(stage, "u",  np.array([0.0, 0.1]))
+        acados_ocp_solver.set(stage, "u",  np.array([1.0, 0.1]))
     for stage in range(N_horizon+N):
         yref_[stage, :] = trajectory[:, stage] #np.concatenate((trajectory[:, stage], [0.0, 0.0]))
         
@@ -136,7 +136,7 @@ def ClosedLoopSimulationSIM():# LOOP OVER N SIM, UPDATING N OCP ACCORDINGLY
         if  ((i%k)==0):
             for j in range(N_horizon): 
                 
-                acados_ocp_solver.set(j, "yref", np.concatenate((trajectory[:, i//k+j], [0.0, 0.0]))) #int(i/k)
+                acados_ocp_solver.set(j, "yref", np.concatenate((trajectory[:, i//k+j], [1.0, 0.0]))) #int(i/k)
             acados_ocp_solver.set(N_horizon, "yref", trajectory[:2, i//k+N_horizon]) #int(i/k)
         status = acados_ocp_solver.solve()
         if status != 0 and status != 2:
@@ -207,7 +207,7 @@ def ClosedLoopSimulationOCP(): # LOOP OVER N OCP, UPDATING N SIM ACCORDINGLY
             xcurrent = acados_sim_solver.simulate(xcurrent, u0)
             simX[j+k+ 1, :] = xcurrent
             simU[j+k, :] = u0
-        plot_trajectory(simX, simU, yref_)
+        #plot_trajectory(simX, simU, yref_)
         
         # update initial condition
         x0 = acados_ocp_solver.get(1, "x")
@@ -235,14 +235,14 @@ def plot_trajectory(simX, simU, yref_):
     fig, ax = plt.subplots(5, 1, sharex=True, figsize=(6, 8))
     fig.suptitle('States and Control over Time', fontsize=14, y=0.97)
     labels = ["x", "y", "heading+slipping angle", "v", "steering angle"]
-    for i in range(3):
+    for i in range(2):
         ax[i].plot(timestampsx, simX[:, i])
         ax[i].plot(timestampsy, yref_[:N+1,i], '--', label='Reference')
         ax[i].set_ylabel(labels[i])
     theta =  simX[:-1,2] +  arctan(lr * tan(simU[:,1]) / L) # define it better
     ax[2].plot(timestampsu, theta) # simX[:,3]
     ax[2].plot(timestampsy, yref_[:N+1,2], '--', label='Reference')
-    ax[2].set_ylabel(labels[3])
+    ax[2].set_ylabel(labels[2])
     for i in range(2):
         ax[i + 3].plot(timestampsu, simU[:, i])
         ax[i + 3].set_ylabel(labels[i + 3])
@@ -251,6 +251,6 @@ def plot_trajectory(simX, simU, yref_):
     plt.show()
 
 if __name__ == "__main__":
-    ClosedLoopSimulationOCP()
+    ClosedLoopSimulationSIM()
     
 
