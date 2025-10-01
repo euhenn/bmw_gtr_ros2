@@ -1,16 +1,29 @@
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-import os
-from ament_index_python.packages import get_package_share_directory
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
-    gazebo_ros_pkg = get_package_share_directory('gazebo_ros')
+
+    gazebo_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+                FindPackageShare('gazebo_ros'),
+                'launch',
+                'gazebo.launch.py'
+            ])
+        ]),
+        launch_arguments={
+            'world': PathJoinSubstitution([
+                FindPackageShare('bmw_gtr'),
+                'worlds',
+                'bfmc_track.world'
+            ])
+        }.items()
+    )
 
     return LaunchDescription([
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(gazebo_ros_pkg, 'launch', 'gazebo.launch.py')
-            )
-        )
+        gazebo_launch
     ])

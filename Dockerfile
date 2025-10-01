@@ -106,4 +106,10 @@ RUN pip3 install -e ${ACADOS_SOURCE_DIR}/interfaces/acados_template
 # Go back to workspace
 WORKDIR /ros2_ws
 
+# Handy aliases
+RUN echo 'alias b="clear && cd /ros2_ws && colcon build && source install/setup.bash"' >> ~/.bashrc && \
+    echo 'alias s="source /ros2_ws/install/setup.bash"' >> ~/.bashrc && \
+    echo 'alias sim="clear && source /ros2_ws/install/setup.bash && ros2 launch bmw_gtr gazebo.launch.py"' >> ~/.bashrc && \
+    echo 'alias mpc="clear && source /ros2_ws/install/setup.bash && ros2 launch bmw_gtr mpc.launch.py"' >> ~/.bashrc
+
 CMD ["bash"]

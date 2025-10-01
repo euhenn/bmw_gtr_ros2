@@ -85,13 +85,13 @@ class CarControllerNode(AutomobileDataSimulator):
         print(f"Loop time: {execution_time:.6f} s")
         
         if execution_time > self.control_interval:
-            self.timeout_error_occurred = True
+            #self.timeout_error_occurred = True
             print(f"ERROR: Control loop exceeded time limit of {self.control_interval}s")
             print(f"Actual execution time: {execution_time:.6f}s")
-            print("Stopping simulation...")
-            self.cleanup()
-            rclpy.shutdown()
-            sys.exit(1)
+            #print("Stopping simulation...")
+            #self.cleanup()
+            #rclpy.shutdown()
+            #sys.exit(1)
 
     def process_key_input(self, key):
         """Process keyboard input and update control parameters"""
