@@ -21,7 +21,7 @@ class KeyboardCarController(Node):
         # Subscriber to camera topic
         self.bridge = CvBridge()
         self.frame = None
-        self.create_subscription(Image, '/camera_top/image_raw', self.camera_callback, 10)
+        self.create_subscription(Image, '/automobile/camera_top/image_raw', self.camera_callback, 10)
 
         # Control state
         self.speed = 0.0
