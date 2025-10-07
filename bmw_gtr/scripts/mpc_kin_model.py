@@ -10,7 +10,7 @@ from reference_trajectory_generation import *
 dt_ocp = 0.1
 N_horizon = 30
 Tf =N_horizon * dt_ocp
-ds = 0.
+ds = 0.05
 real_track = TrajectoryGeneration()
 trajectory, N = real_track.time_reference(N_horizon, ds, [230,307, 377,418])
 X0 = trajectory[:,0]

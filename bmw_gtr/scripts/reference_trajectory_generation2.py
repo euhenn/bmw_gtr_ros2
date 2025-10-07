@@ -1,7 +1,3 @@
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.interpolate import CubicSpline
-from casadi import sin, cos, tan, arctan
 
 """
 CODE FOR GENERETING ELLIPSE AND SCURVE REFERNCE
@@ -21,14 +17,18 @@ import cv2 as cv
 from path_planning1 import PathPlanning 
 
 class TrajectoryGeneration:
-    def __init__(self):
+    def __init__(self, ds, N_horizon):
         track = cv.imread('data/final_map.png')
         self.planner = PathPlanning(track)
+        self.N_horizon = N_horizon
+        self.ds = ds
 
+        self.cs_x = None
+        self.cs_y = None
+        self.S_length = None
 
-    def generating_spatial_reference(self, ds, nodes_to_visit):
-        # Generate the path
-        self.planner.generate_path_passing_through(nodes_to_visit, step_length=0.01)
+    def generating_dense_spatial_ref(self):
+        self.planner.generate_path_passing_through(self.nodes_to_visit, step_length=0.01)
         path_dense = np.array(self.planner.path)  
         Xd = path_dense[:, 0]
         Yd = path_dense[:, 1]
@@ -44,11 +44,18 @@ class TrajectoryGeneration:
             raise RuntimeError("Zero length path")
 
         # 3) build splines X(s), Y(s)
-        cs_x = CubicSpline(s_dense, Xd)
-        cs_y = CubicSpline(s_dense, Yd)
+        self.cs_x = CubicSpline(s_dense, Xd)
+        self.cs_y = CubicSpline(s_dense, Yd)
+        self.S_length = S_length 
 
+        return self.cs_x, self.cs_y, self.S_length
+
+    def generating_spatial_reference(self, nodes_to_visit):
+        # Generate the path
+        self.nodes_to_visit = nodes_to_visit
+        cs_x, cs_y, S_length = self.generating_dense_spatial_ref()
         # 4) uniform arc-length grid
-        s_uniform = np.arange(0.0, S_length + 1e-9, ds)
+        s_uniform = np.arange(0.0, S_length + 1e-9, self.ds)
         if s_uniform[-1] < S_length:
             s_uniform = np.concatenate((s_uniform, [S_length]))  # include final point
 
@@ -66,6 +73,7 @@ class TrajectoryGeneration:
 
         theta = np.arctan2(dy_ds, dx_ds)   # heading
         theta = np.unwrap(theta)
+        self.theta = theta
         denom = (np.hypot(dx_ds, dy_ds)**3) 
         # avoid division by zero
         denom = np.maximum(denom, 1e-9)
@@ -75,6 +83,43 @@ class TrajectoryGeneration:
         trajectory = np.vstack((e_theta, e_y, Xu, Yu, theta, v)).T.astype(np.float32)  # (M,3)
 
         return trajectory, s_uniform, kappa
+
+    
+    def generating_online_spatial_ref(self, s):
+        s_horizon = np.linspace(s, s+ self.N_horizon*self.ds -self.ds , self.N_horizon)
+        s_horizon = np.clip(s_horizon, 0, self.S_length)
+        
+        ds = s_horizon[2] - s_horizon[1]
+        #print(ds)
+        # 5) evaluate spline at uniform s
+        Xu = self.cs_x(s_horizon)
+        Yu = self.cs_y(s_horizon)
+        e_theta = np.zeros(Xu.shape)
+        e_y= np.zeros(Xu.shape)
+
+        # 6) compute derivatives and heading and curvature
+        dx_ds = self.cs_x.derivative(1)(s_horizon)
+        dy_ds = self.cs_y.derivative(1)(s_horizon)
+        ddx_ds2 = self.cs_x.derivative(2)(s_horizon)
+        ddy_ds2 = self.cs_y.derivative(2)(s_horizon)
+
+        theta = np.arctan2(dy_ds, dx_ds)   # heading
+        theta = np.unwrap(theta)
+        
+        denom = (np.hypot(dx_ds, dy_ds)**3) 
+        # avoid division by zero
+        denom = np.maximum(denom, 1e-9)
+        kappa_horizon = (dx_ds * ddy_ds2 - dy_ds * ddx_ds2) / denom
+        v = 1*np.ones(Xu.shape)
+
+        trajectory = np.vstack((e_theta, e_y, Xu, Yu, theta, v)).T.astype(np.float32) 
+        print(trajectory.shape) # (M,3)
+
+        return trajectory
+        
+
+
+
 
 
     def generating_time_reference(self, N_horizon, ds, nodes_to_visit): 
@@ -123,7 +168,7 @@ def plot_trajectory_in_space(y_ref, label='Trajectory', title='Reference Traject
     plt.show()
 
 def plot_full_trajectory(yref, ds, label='Trajectory', title='Reference Trajectory'):
-    ny= yref.shape[1]
+    ny= yref.shape [1]
     N= yref.shape[0]
     timestamps = np.arange(N) * ds
     fig, ax = plt.subplots(ny, 1, sharex=True, figsize=(6, 8))
@@ -137,14 +182,17 @@ def plot_full_trajectory(yref, ds, label='Trajectory', title='Reference Trajecto
     plt.show()
 
 if __name__ == "__main__":
-    track = TrajectoryGeneration()
-    N_horizon = 10
+    
+    N_horizon = 80
     ds = 0.1
+    track = TrajectoryGeneration(ds, N_horizon)
     nodes = [73,91,125,141]
     nodes = [410,391,352,377,418]
     nodes = [125,160,150,133,126]
-    trajectory, s_uniform, kappa = track.generating_spatial_reference( ds, nodes)
+    trajectory, s_uniform, kappa = track.generating_spatial_reference(nodes)
     
+    s_current = 2.0
+    traj_local, s_local, kappa_local = track.generating_online_spatial_ref(s_current)
     #np.save("path1.npy", y_ref) #np.load("path.npy") 
-    plot_full_trajectory(trajectory, ds, label='Car Path')
-    plot_trajectory_in_space(trajectory, label='Car Path')
+    plot_full_trajectory(traj_local, ds, label='Car Path')
+    plot_trajectory_in_space(traj_local, label='Car Path')
