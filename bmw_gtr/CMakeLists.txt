@@ -78,7 +78,7 @@ install(TARGETS carlikerobot_ros_plugin bno055_plugin gps_plugin
   LIBRARY DESTINATION lib
 )
 
-install(DIRECTORY launch worlds models config
+install(DIRECTORY launch worlds models 
   DESTINATION share/${PROJECT_NAME}
 )
 

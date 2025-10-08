@@ -76,43 +76,58 @@ class CarControllerNode(Node):
         return int(np.argmin(dists))
 
     def run(self):
-        next_time = time.time()
-        lookahead_steps = 10
+        prev_s = 0.0  # track progress along path
+        total_s = 0.0
+        prev_x, prev_y = self.car.x_true, self.car.y_true
+        i = 0 
+        lookahead_steps = 1
+
         while rclpy.ok():
             state = self.get_current_state()
-            x, y, yaw, _ = state
+            x, y, yaw, v = state
 
+            s_sim,epsi ,ey= time2spatial(x, y, yaw ,s_ref,self.mpc.trajectory[:,2:5]) # y_ref will be replaced with self.mpc.trajectory
+            
+
+            travelled_ds =  np.hypot(x - prev_x, y - prev_y)
+            s_total + = travelled_ds
+            
+
+            # YOU are yet to obtain s_ref
+            if (total_s - prev_s >= self.ds) or (s_total>s_ref[i+1]):
+                i = i + 1
+                prev_s = total_s
+                prev_x, prev_y = x, y
+
+            # here definetly can be put the ref_2_spatial, this is not the right way to go
             closest_idx = self.find_closest_index(x, y)
             self.idx = min(
-                closest_idx + lookahead_steps,
-                self.mpc.trajectory.shape[1] - self.mpc.N_horizon - 1
-            )
+                closest_idx + 1,
+                self.mpc.trajectory.shape[1] - 1)
 
-            if s > trajectory.shape[1] * ds : #predjen put je veci ovo sredi ranije 
+            if i+1 >= self.mpc.trajectory.shape[1] - self.mpc.N_horizon - 1:  
                 self.get_logger().info("Stop condition reached")
                 self.apply_control(0.0, 0.0)
                 break
 
-            traj_horizon = self.mpc.get_reference_segment(self.idx)
+            if self.control_thread is None or not self.control_thread.is_alive():
+                self.control_thread = threading.Thread(target=self.solve_and_apply, args=(state,))
+                self.control_thread.start()
+            
+            self.get_logger().info(f"Number of iteration passed{i}")
 
-            t0 = time.time()
-            self.v_cmd, delta_cmd = self.mpc.solve(state[:3], traj_horizon)
-            self.get_logger().info(f"MPC solve took {time.time()-t0:.3f}s")
+    def solve_and_apply(self, state):
+        t0 = time.time()
+        v_cmd, delta_cmd = self.mpc.solve(state[:3], i)
+        self.get_logger().info(f"MPC solve took {time.time()-t0:.3f}s")
+        self.v_cmd, delta_cmd = float(v_cmd), float(delta_cmd)
+        self.apply_control(self.v_cmd, delta_cmd)
 
-            self.apply_control(self.v_cmd, delta_cmd)
-
-            self.get_logger().info(
+        x, y, yaw = state[:3]  
+        self.get_logger().info(
                 f"Step {self.idx} | Pos: ({x:.2f}, {y:.2f}) "
                 f"Yaw: {np.rad2deg(yaw):.2f}° | Vel: {state[3]:.2f} m/s | "
-                f"Cmd -> v: {self.v_cmd:.2f} m/s, δ: {np.rad2deg(delta_cmd):.1f}°"
-            )
-
-            next_time += self.dt
-            sleep_time = next_time - time.time()
-            if sleep_time > 0:
-                time.sleep(sleep_time)
-            else:
-                self.get_logger().warn(f"Loop overran by {-sleep_time:.3f}s")
+                f"Cmd -> v: {self.v_cmd:.2f} m/s, δ: {np.rad2deg(delta_cmd):.1f}°")
 
     def shutdown(self):
         self._sim_running = False

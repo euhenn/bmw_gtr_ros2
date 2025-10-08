@@ -12,7 +12,7 @@ class TrajectoryGeneration:
 
     def generating_reference(self, nodes_to_visit):
         # Generate the path
-        self.planner.generate_path_passing_through(nodes_to_visit, step_length=0.1)
+        self.planner.generate_path_passing_through(nodes_to_visit, step_length=ds)
         path_with_yaw = []
         for i in range(len(self.planner.path)-1):
             x, y = self.planner.path[i]
@@ -41,7 +41,7 @@ class TrajectoryGeneration:
         
     def time_reference(self, N_horizon, nodes_to_visit): 
         trajectory = self.generating_reference(nodes_to_visit)
-        N = trajectory.shape[0]
+        N = trajectory.shape[0] 
         x = np.zeros(N+N_horizon)
         y= np.zeros(N+N_horizon)
         theta = np.zeros(N+N_horizon)

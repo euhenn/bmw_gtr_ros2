@@ -1,3 +1,4 @@
+
 from acados_template import AcadosOcp, AcadosOcpSolver, AcadosSimSolver, AcadosModel, AcadosSim
 import numpy as np
 import scipy.linalg
@@ -146,13 +147,13 @@ class MPC_KinematicBicycle:
             self.acados_solver.set(j, "yref", np.concatenate([self.trajectory[:, i+j], np.array([1.0, 0.0])]))
         self.acados_solver.set(N_horizon, "yref", self.trajectory[:2, i+N_horizon])
 
-    def solve(self, state, traj):
+    def solve(self, state, idx):
         # Debug
         #print("DEBUG solve: state:", state)
         #print("DEBUG solve: traj shape:", traj.shape)
 
         self.set_initial_state(state)
-        self.set_reference(traj)
+        self.set_reference(idx)
 
         # show first few yrefs
         try:

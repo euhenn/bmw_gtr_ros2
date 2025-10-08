@@ -85,8 +85,8 @@ class MPC_KinematicBicycle:
         ocp.cost.yref_e = np.zeros((ny_e,))
         ocp.model.cost_y_expr_e = vertcat(model.x[:2])
 
-        ocp.constraints.lbu = np.array([-2.0, -np.deg2rad(28)])
-        ocp.constraints.ubu = np.array([2.0, np.deg2rad(28)])
+        ocp.constraints.lbu = np.array([-1.0, -np.deg2rad(28)])
+        ocp.constraints.ubu = np.array([1.0, np.deg2rad(28)])
         ocp.constraints.idxbu = np.array([0, 1])
         ocp.constraints.x0 = self.X0
 
