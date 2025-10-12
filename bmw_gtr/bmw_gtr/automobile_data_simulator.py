@@ -8,11 +8,12 @@ from cv_bridge import CvBridge
 import json
 import collections
 import numpy as np
-from time import time
+import time as system_time
 import helper_functions as hf
 from automobile_data_interface import Automobile_Data
 
-REALISTIC = False
+REALISTIC = False                   # Set this to True when using realistic servo model
+GAZEBO_WITH_STEP_CONTROL = False    # Set this to True when using step control
 
 ENCODER_TIMER = 0.01  # frequency of encoder reading
 STEER_UPDATE_FREQ = 50.0 if REALISTIC else 150.0
@@ -22,27 +23,24 @@ DELTA_ANGLE = np.rad2deg(MAX_SERVO_ANGULAR_VELOCITY) / STEER_UPDATE_FREQ
 MAX_STEER_COMMAND_FREQ = 50.0
 MAX_STEER_SAMPLES = max(int((2 * SERVO_DEAD_TIME_DELAY) * MAX_STEER_COMMAND_FREQ), 10)
 
-GPS_DELAY = 0.45  # [s] delay for gps message to arrive
-ENCODER_POS_FREQ = 100.0  # [Hz] frequency of encoder position messages
-GPS_FREQ = 10.0  # [Hz] frequency of gps messages
+GPS_DELAY = 0.45            # [s] delay for gps message to arrive
+ENCODER_POS_FREQ = 100.0    # [Hz] frequency of encoder position messages
+GPS_FREQ = 10.0             # [Hz] frequency of gps messages
 BUFFER_PAST_MEASUREMENTS_LENGTH = int(round(GPS_DELAY * ENCODER_POS_FREQ))
 
 
-class AutomobileDataSimulator(Node):
+class AutomobileDataSimulator(Node, Automobile_Data):
+    """ROS2 node that simulates and publishes automobile data."""
+
     def __init__(self,
                  trig_control=True,
                  trig_bno=False,
                  trig_enc=False,
                  trig_cam=False,
                  trig_gps=False):
+        Node.__init__(self, 'automobile_data_simulator')
+        Automobile_Data.__init__(self)
 
-        # Initialize Node first
-        super().__init__('automobile_data_simulator')
-        
-        # Initialize all Automobile_Data attributes manually
-        self._init_automobile_data()
-
-        # ADDITIONAL VARIABLES
         self.timestamp = 0.0
         self.prev_x_true = self.x_true
         self.prev_y_true = self.y_true
@@ -51,7 +49,13 @@ class AutomobileDataSimulator(Node):
         self.target_steer = 0.0
         self.curr_steer = 0.0
         self.steer_deque = collections.deque(maxlen=MAX_STEER_SAMPLES)
-        self.time_last_steer_command = time()
+        
+        if GAZEBO_WITH_STEP_CONTROL:
+            # using ROS simulation time for step control mode
+            self.time_last_steer_command = self.get_clock().now()
+        else:
+            self.time_last_steer_command = system_time.time()
+            
         self.target_dist = 0.0
         self.arrived_at_dist = True
         self.yaw_true = 0.0
@@ -79,189 +83,21 @@ class AutomobileDataSimulator(Node):
         if trig_gps:
             self.sub_pos = self.create_subscription(Localisation, "/automobile/localisation", self.position_callback, 10)
 
-    def _init_automobile_data(self):
-        """Initialize all attributes from Automobile_Data class"""
-        # Import constants from automobile_data_interface
-        from automobile_data_interface import (
-            START_X, START_Y, YAW_GLOBAL_OFFSET, GPS_DELAY, ENCODER_POS_FREQ, GPS_FREQ,
-            BUFFER_PAST_MEASUREMENTS_LENGTH, MIN_SPEED, MAX_SPEED, MAX_ACCEL, MAX_STEER,
-            LENGTH, WIDTH, BACKTOWHEEL, WHEEL_LEN, WHEEL_WIDTH, WB,
-            FRAME_WIDTH, FRAME_HEIGHT, CAM_X, CAM_Y, CAM_Z, CAM_ROLL, CAM_PITCH, 
-            CAM_YAW, CAM_FOV, CAM_F, CAM_Sx, CAM_Sy, CAM_Ox, CAM_Oy, CAM_K,
-            EST_INIT_X, EST_INIT_Y, EST_INIT_YAW, EKF_STEPS_BEFORE_TRUST
-        )
-        
-        # CAR POSITION
-        self.x_true = START_X
-        self.y_true = START_Y
-        self.x = 0.0
-        self.y = 0.0
-        
-        # IMU
-        self.yaw_offset = YAW_GLOBAL_OFFSET
-        self.roll = 0.0
-        self.roll_deg = 0.0
-        self.pitch = 0.0
-        self.pitch_deg = 0.0
-        self.yaw = 0.0
-        self.yaw_deg = 0.0
-        self.yaw_true = 0.0
-        self.accel_x = 0.0
-        self.accel_y = 0.0
-        self.accel_z = 0.0
-        self.gyrox = 0.0
-        self.gyroy = 0.0
-        self.gyroz = 0.0
-        self.filtered_yaw = 0.0
-        self.yaw_random_start = 0.0
-        self.IMU_yaw = 0.0
-        
-        # ENCODER
-        self.encoder_velocity = 0.0
-        self.filtered_encoder_velocity = 0.0
-        self.encoder_distance = 0.0
-        self.prev_dist = 0.0
-        self.prev_gps_dist = 0.0
-        
-        # CAR POSE ESTIMATION
-        self.x_est = 0.0
-        self.y_est = 0.0
-        self.yaw_est = self.yaw_offset
-        self.gps_cnt = 0
-        self.trust_gps = True
-        self.buffer_gps_positions_still_car = []
-        
-        # LOCAL POSITION
-        self.x_loc = 0.0
-        self.y_loc = 0.0
-        self.yaw_loc = 0.0
-        self.yaw_loc_o = 0.0
-        self.dist_loc = 0.0
-        self.dist_loc_o = 0.0
-        self.last_gps_sample_time = time()
-        self.new_gps_sample_arrived = True
-        
-        # SONARs
-        self.sonar_distance = 3.0
-        self.filtered_sonar_distance = 3.0
-        self.right_sonar_distance = 3.0
-        self.filtered_right_sonar_distance = 3.0
-        self.left_sonar_distance = 3.0
-        self.filtered_left_sonar_distance = 3.0
-        
-        # TOFs
-        self.center_tof_distance = 0.21
-        self.filtered_center_tof_distance = 0.21
-        self.left_tof_distance = 0.21
-        self.filtered_left_tof_distance = 0.21
-        
-        # ESP32 CAMERA
-        self.obstacle = 0.0
-        self.filtered_obstacle = 0.0
-        self.sign = 0.0
-        self.filtered_sign = 0.0
-        
-        # CAMERA
-        self.frame = np.zeros((FRAME_WIDTH, FRAME_HEIGHT, 3), np.uint8)
-        
-        # CONTROL ACTION
-        self.speed = 0.0
-        self.steer = 0.0
-        
-        # CONSTANT PARAMETERS
-        self.MIN_SPEED = MIN_SPEED
-        self.MAX_SPEED = MAX_SPEED
-        self.MAX_STEER = MAX_STEER
-        
-        # VEHICLE PARAMETERS
-        self.LENGTH = LENGTH
-        self.WIDTH = WIDTH
-        self.BACKTOWHEEL = BACKTOWHEEL
-        self.WHEEL_LEN = WHEEL_LEN
-        self.WHEEL_WIDTH = WHEEL_WIDTH
-        self.WB = WB
-        
-        # CAMERA PARAMETERS
-        self.FRAME_WIDTH = FRAME_WIDTH
-        self.FRAME_HEIGHT = FRAME_HEIGHT
-        self.CAM_X = CAM_X
-        self.CAM_Y = CAM_Y
-        self.CAM_Z = CAM_Z
-        self.CAM_ROLL = CAM_ROLL
-        self.CAM_PITCH = CAM_PITCH
-        self.CAM_YAW = CAM_YAW
-        self.CAM_FOV = CAM_FOV
-        self.CAM_K = CAM_K
-        
-        # ESTIMATION PARAMETERS
-        self.last_estimation_callback_time = None
-        self.est_init_state = np.array([EST_INIT_X, EST_INIT_Y]).reshape(-1, 1)
-        
-        self.past_encoder_distances = collections.deque(maxlen=BUFFER_PAST_MEASUREMENTS_LENGTH)
-        self.past_yaws = collections.deque(maxlen=BUFFER_PAST_MEASUREMENTS_LENGTH)
-        self.yaws_between_updates = collections.deque(maxlen=int(round(ENCODER_POS_FREQ/GPS_FREQ)))
-        
-        self.STARTED_WITH_IMU = False
+    def get_current_time(self):
+        """Get current time based on the selected mode."""
+        if GAZEBO_WITH_STEP_CONTROL:
+            return self.get_clock().now()
+        else:
+            return system_time.time()
 
-    # Copy all methods from Automobile_Data class
-    def drive(self, speed=0.0, angle=0.0):
-        """Command a speed and steer angle to the car"""
-        self.drive_speed(speed)
-        self.drive_angle(angle)
-
-    def update_rel_position(self):
-        """Update relative pose of the car"""
-        self.yaw_loc = self.yaw - self.yaw_loc_o
-        curr_dist = self.encoder_distance
-
-        self.past_encoder_distances.append(curr_dist)
-        if len(self.past_yaws) > BUFFER_PAST_MEASUREMENTS_LENGTH-1:
-            self.yaws_between_updates.append(self.past_yaws.popleft())
-        self.past_yaws.append(self.yaw)
-
-        self.dist_loc = np.abs(curr_dist - self.dist_loc_o)
-        signed_L = curr_dist - self.prev_dist
-        L = np.abs(signed_L)
-        dx = L * np.cos(self.yaw_loc)
-        dy = L * np.sin(self.yaw_loc)
-        self.x_loc += dx
-        self.y_loc += dy
-        self.prev_dist = curr_dist
-        
-        if self.new_gps_sample_arrived:
-            self.last_gps_sample_time = time()
-            self.new_gps_sample_arrived = False
-
-    def reset_rel_pose(self):
-        """Set origin of the local frame to the actual pose"""
-        self.x_loc = 0.0
-        self.y_loc = 0.0
-        self.yaw_loc_o = self.yaw
-        self.prev_yaw = self.yaw
-        self.yaw_loc = 0.0
-        self.prev_yaw_loc = 0.0
-        self.dist_loc = 0.0
-        self.dist_loc_o = self.encoder_distance
-
-    @staticmethod
-    def normalizeSpeed(val):
-        """Clamp speed value"""
-        from automobile_data_interface import MIN_SPEED, MAX_SPEED
-        if val < MIN_SPEED:
-            val = MIN_SPEED
-        elif val > MAX_SPEED:
-            val = MAX_SPEED
-        return val
-
-    @staticmethod
-    def normalizeSteer(val):
-        """Clamp steer value"""
-        from automobile_data_interface import MAX_STEER
-        if val < -MAX_STEER:
-            val = -MAX_STEER
-        elif val > MAX_STEER:
-            val = MAX_STEER
-        return val
+    def get_time_difference(self, t1, t2):
+        """Calculate time difference based on the selected mode."""
+        if GAZEBO_WITH_STEP_CONTROL:
+            # Here both are ROS Time objects
+            return (t2 - t1).nanoseconds / 1e9
+        else:
+            # And here time floats
+            return t2 - t1
 
     # === CALLBACKS ===
     def camera_callback(self, data):
@@ -316,12 +152,17 @@ class AutomobileDataSimulator(Node):
 
     def steer_update_callback(self):
         if len(self.steer_deque) > 0:
-            curr_time = time()
+            curr_time = self.get_current_time()
             angle, t = self.steer_deque.popleft()
-            if curr_time - t < SERVO_DEAD_TIME_DELAY:
+            
+            # Calculate time difference based on mode
+            time_diff = self.get_time_difference(t, curr_time)
+            
+            if time_diff < SERVO_DEAD_TIME_DELAY:
                 self.steer_deque.appendleft((angle, t))
             else:
                 self.target_steer = angle
+                
         diff = self.target_steer - self.curr_steer
         if diff > 0.0:
             incr = min(diff, DELTA_ANGLE)
@@ -344,8 +185,12 @@ class AutomobileDataSimulator(Node):
 
     def drive_angle(self, angle=0.0, direct=False):
         angle = self.normalizeSteer(angle)
-        curr_time = time()
-        if curr_time - self.time_last_steer_command > 1 / MAX_STEER_COMMAND_FREQ:
+        curr_time = self.get_current_time()
+        
+        # Calculate time difference based on mode
+        time_diff = self.get_time_difference(self.time_last_steer_command, curr_time)
+        
+        if time_diff > 1 / MAX_STEER_COMMAND_FREQ:
             self.time_last_steer_command = curr_time
             self.steer_deque.append((angle, curr_time))
         else:
@@ -366,7 +211,8 @@ class AutomobileDataSimulator(Node):
                 self.drive_speed(0.0)
 
     def stop(self, angle=0.0):
-        self.steer_deque.append((angle, time()))
+        curr_time = self.get_current_time()
+        self.steer_deque.append((angle, curr_time))
         self.speed = 0.0
         data = {'action': '3', 'steerAngle': float(angle)}
         reference = json.dumps(data)
