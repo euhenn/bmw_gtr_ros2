@@ -4,10 +4,10 @@ NEEDED IN ORDER TO HAVE SIMULATION AND CONTROL IN DIFFERENT DOMAINS
 '''
 
 import numpy as np
-def time2spatial(x,y,psi,sref,y_ref,psiref):
-    xref = y_ref[:, 0] 
-    yref = y_ref[:, 1]
-    #psiref = y_ref[:, 2]
+def time2spatial(x,y,psi,sref,y_ref):
+    xref = y_ref[0, :] 
+    yref = y_ref[1, :]
+    psiref = y_ref[2, :]
 
     idxmin=ClosestPoint(x,y,xref,yref)
     idxmin2=NextClosestPoint(x,y,xref,yref,idxmin)
@@ -20,9 +20,9 @@ def time2spatial(x,y,psi,sref,y_ref,psiref):
 
     s=s0
     ey=np.cos(psi0)*(y-y0)-np.sin(psi0)*(x-x0)
-    epsi=psi-psi0
+    epsi=psi0 - psi
 
-    return s,epsi,ey
+    return s,epsi,ey,idxmin
 
 def StateProjection(x,y,xref,yref,sref,idxmin,idxmin2): # linear interpolation between 2 points
     ds=abs(sref[idxmin]-sref[idxmin2]) # ds

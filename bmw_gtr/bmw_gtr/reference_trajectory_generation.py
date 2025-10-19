@@ -12,6 +12,7 @@ class TrajectoryGeneration:
 
     def generating_reference(self, nodes_to_visit):
         # Generate the path
+        ds = 0.02
         self.planner.generate_path_passing_through(nodes_to_visit, step_length=ds)
         path_with_yaw = []
         for i in range(len(self.planner.path)-1):
@@ -85,6 +86,20 @@ def plot_trajectory_in_space(y_ref, label='Trajectory', title='Reference Traject
     plt.legend()
     plt.show()
 
+def plot_full_trajectory(yref, ds, label='Trajectory', title='Reference Trajectory'):
+    ny= yref.shape [0]
+    N= yref.shape[1]
+    timestamps = np.arange(N) * ds
+    fig, ax = plt.subplots(ny, 1, sharex=True, figsize=(6, 8))
+    fig.suptitle('States and Control over Time', fontsize=14, y=0.97)
+    labels = ["x", "y", "heading+slipping angle"]
+    for i in range(ny):
+        ax[i].plot(timestamps, yref[i, :], '--', label='Reference')
+        #ax[i].set_ylabel(labels[i])
+    ax[-1].set_xlabel("arc of length [m]")
+    plt.tight_layout()
+    plt.show()
+
 
 if __name__ == "__main__":
     track = TrajectoryGeneration()
@@ -92,3 +107,4 @@ if __name__ == "__main__":
     nodes = [73,91]
     y_ref, N = track.time_reference(N_horizon, nodes)
     plot_trajectory_in_space(y_ref, label='Car Path')
+    plot_full_trajectory(y_ref, 0.1)

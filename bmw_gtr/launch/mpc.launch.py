@@ -27,7 +27,7 @@ def generate_launch_description():
                 "models/m3_gtr/model.sdf"
             ]),
             "-x", "0.40646722",
-            "-y", "6.560996",
+            "-y", "6.430996",
             "-z", "0.0309",
             "-Y", "-1.57"
         ],
@@ -36,7 +36,7 @@ def generate_launch_description():
 
     # Run controller script
     run_controller_script = ExecuteProcess(
-        cmd=["python3", "/ros2_ws/src/bmw_gtr/bmw_gtr/main_brain.py"],
+        cmd=["python3", "/ros2_ws/src/bmw_gtr/bmw_gtr/main_brain2.py"],
         output="screen"
     )
 

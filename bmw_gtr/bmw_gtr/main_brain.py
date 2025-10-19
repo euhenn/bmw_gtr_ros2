@@ -7,6 +7,8 @@ import numpy as np
 import time
 import threading
 
+from nav_msgs.msg import Odometry
+
 class CarControllerNode(Node):
     def __init__(self):
         super().__init__('car_controller_node')
@@ -22,15 +24,29 @@ class CarControllerNode(Node):
         # Control step (seconds)
         self.dt = 0.1
         # MPC setup
-        self.mpc = MPC_KinematicBicycle(dt_ocp=self.dt, N_horizon=20)
+        self.mpc = MPC_KinematicBicycle(dt_ocp=self.dt , N_horizon=20)
 
         # Align trajectory yaw with current simulator yaw
-        self.align_trajectory_with_vehicle()
+        #self.align_trajectory_with_vehicle()
         self.control_thread = None
+        self.pose_ready = False
+        self.pose_ready_time = None
 
         # Trajectory index
         self.idx = 0
-        self.v_cmd = 0.5
+        self.v_cmd = 0.2
+
+        # === TF setup ===
+        #self.tf_buffer = Buffer()
+        #self.tf_listener = TransformListener(self.tf_buffer, self)
+
+        # === Subscribe to odometry ===
+        #self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+
+        # Pose readiness will be determined at runtime from the simulator state.
+        # (Do NOT reference 'msg' in __init__; initial pose checks run inside run()).
+        
+        
 
         # Background simulator spin thread
         self._sim_running = True
@@ -62,7 +78,7 @@ class CarControllerNode(Node):
         traj[0, :] = rotated_xy[0, :] + x0
         traj[1, :] = rotated_xy[1, :] + y0
         '''
-        traj[2, :] = traj_yaw + yaw_offset
+        traj[2, :] = traj_yaw #+ yaw_offset
         
         self.mpc.trajectory = traj
         self.get_logger().info(f"Trajectory yaw aligned with vehicle: offset={np.rad2deg(yaw_offset):.2f}°")
@@ -79,6 +95,7 @@ class CarControllerNode(Node):
         yaw = np.deg2rad(float(self.car.yaw_true))
         v = float(self.car.filtered_encoder_velocity)
         return np.array([x, y, yaw, self.v_cmd])
+        #0.41, 6.69  -1.57° 
 
     def apply_control(self, v, delta):
         self.car.drive_speed(v)
@@ -92,7 +109,18 @@ class CarControllerNode(Node):
 
     def run(self):
         next_time = time.time()
-        lookahead_steps = 1
+        lookahead_steps = 10
+        i = 0
+        # Wait until simulator provides a valid non-default pose
+        while (
+            abs(self.car.x_true - 0.2) < 1e-3 and
+            abs(self.car.y_true - 14.8) < 1e-3 and
+            abs(self.car.yaw_true) < 1e-3
+        ):
+            self.get_logger().warn("Waiting for valid car pose...")
+            time.sleep(0.2)
+
+
         while rclpy.ok():
             state = self.get_current_state()
             x, y, yaw, _ = state
@@ -103,6 +131,9 @@ class CarControllerNode(Node):
                 closest_idx + lookahead_steps,
                 self.mpc.trajectory.shape[1]- 1
             )
+            i = i + 1
+            self.idx = i
+            self.get_logger().info(f"Step {self.idx} | Trajectory: ({self.mpc.trajectory[:,self.idx]}) ")
             
 
             if self.control_thread is None or not self.control_thread.is_alive():
@@ -119,6 +150,7 @@ class CarControllerNode(Node):
             next_time += self.dt
             sleep_time = next_time - time.time()
             if sleep_time > 0:
+                time.sleep(self.dt)
                 time.sleep(sleep_time)
             else:
                 self.get_logger().warn(f"Loop overran by {-sleep_time:.3f}s")

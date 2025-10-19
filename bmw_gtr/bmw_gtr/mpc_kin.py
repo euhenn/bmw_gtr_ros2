@@ -6,7 +6,7 @@ from casadi import SX, vertcat, cos, sin, tan, arctan
 from reference_trajectory_generation import TrajectoryGeneration
 
 class MPC_KinematicBicycle:
-    def __init__(self, dt_ocp=0.1, N_horizon=20, nodes=[73, 91]):
+    def __init__(self, dt_ocp=0.1, N_horizon=20, nodes=[73,115, 91]):
         self.lf = 0.13
         self.lr = 0.13
         self.L = self.lf + self.lr
@@ -110,10 +110,10 @@ class MPC_KinematicBicycle:
         
         for j in range(self.N_horizon):
             if j < traj.shape[1]:
-                yref = np.concatenate([traj[:3, j], [traj[3, j], 0.0]])
+                yref = np.concatenate([traj[:3, j], [traj[3, j], 0.5]])
             else:
                 # Use last point if trajectory is shorter than horizon
-                yref = np.concatenate([traj[:3, -1], [traj[3, -1], 0.0]])
+                yref = np.concatenate([traj[:3, -1], [traj[3, -1], 0.5]])
             self.solver.set(j, "yref", yref)
 
         # Terminal reference
