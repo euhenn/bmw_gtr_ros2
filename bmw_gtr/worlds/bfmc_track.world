@@ -3,8 +3,7 @@
 
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>3.48 4 11.8 0 1.57 1.57</pose>
-        <pose>11.2289 -0.320351 1.50664 0 0.513796 0.988832</pose>
+        <pose>1.89109 4.01127 5.72343 0 1.57 0</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -158,7 +157,7 @@
       <ambient>0.4 0.4 0.4 1</ambient>
       <background>0.7 0.7 0.7 1</background>
       <shadows>1</shadows>
-      <grid>false</grid> <!-- added by eugen -->
+      <grid>0</grid> <!-- added by eugen -->
     </scene>
 
 
