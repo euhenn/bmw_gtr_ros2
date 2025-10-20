@@ -172,11 +172,11 @@
 
 
     <state world_name='bfmc_track'>
-      <sim_time>128 597000000</sim_time>
-      <real_time>131 529190071</real_time>
-      <wall_time>1712743748 117458862</wall_time>
-      <iterations>128597</iterations>
-      <paused>true</paused>                         <!-- pause here -->
+      <sim_time>0</sim_time>
+      <real_time>0</real_time>
+      <wall_time>0</wall_time>
+      <iterations>0</iterations>
+      <paused>true</paused>                         <!-- pause not pausing -->
       <model name='track'>
         <pose>11.31 7.5 0 0 -0 0</pose>
         <scale>1 1 1</scale>
