@@ -1,18 +1,28 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess
+from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess, RegisterEventHandler
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
+import os
 
 def generate_launch_description():
 
+    # Pre-launch cleanup
+    pre_cleanup = ExecuteProcess(
+        cmd=['bash', '-c', 'pkill -9 gzserver; pkill -9 gzclient; pkill -9 gazebo; rm -rf /tmp/gazebo* ~/.gazebo/log/*'],
+        name='pre_cleanup',
+        output='screen'
+    )
+
+    # Fixed GUI ini creation - using proper bash syntax
     create_gui_ini = ExecuteProcess(
         cmd=[
-            'bash', '-c', '''
+            'bash', '-c', 
+            '''
             mkdir -p ~/.gazebo
-            rm -f ~/.gazebo/gui.ini
-            cat <<EOF > ~/.gazebo/gui.ini
+            cat > ~/.gazebo/gui.ini << "EOF"
 [geometry]
 x=77
 y=557
@@ -21,7 +31,8 @@ height=481
 EOF
             '''
         ],
-        shell=True
+        name='create_gui_ini',
+        output='screen'
     )
 
     gazebo_launch = IncludeLaunchDescription(
@@ -37,11 +48,15 @@ EOF
                 FindPackageShare('bmw_gtr'),
                 'worlds',
                 'bfmc_track.world'
-            ])
+            ]),
+            'verbose': 'true',  # Add verbose for debugging
+            'gdb': 'false'      # Disable gdb for now
         }.items()
     )
 
+
     return LaunchDescription([
-        create_gui_ini,
-        gazebo_launch
+        pre_cleanup,
+        TimerAction(period=2.0, actions=[create_gui_ini]),  # Wait after cleanup
+        TimerAction(period=3.0, actions=[gazebo_launch]),   # Wait before starting gazebo
     ])
