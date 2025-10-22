@@ -14,7 +14,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from casadi import sin, cos, tan, arctan
 import cv2 as cv
-from path_planning1 import PathPlanning 
+from path_planning_eugen import PathPlanning 
 
 class TrajectoryGeneration:
     def __init__(self, ds, N_horizon):
@@ -118,10 +118,6 @@ class TrajectoryGeneration:
         return trajectory
         
 
-
-
-
-
     def generating_time_reference(self, N_horizon, ds, nodes_to_visit): 
         self.planner.generate_path_passing_through(nodes_to_visit, step_length=0.001)
         path = []
@@ -182,26 +178,133 @@ def plot_full_trajectory(yref, ds, label='Trajectory', title='Reference Trajecto
     plt.show()
 
 if __name__ == "__main__":
-    
+    # Parameters
     N_horizon = 50
     ds = 0.06
-    track = TrajectoryGeneration(ds, N_horizon)
-    nodes = [73,91,125,141]
-    nodes = [410,391,352,377,418]
-    nodes = [125,160,150,133,126]
-    nodes = [73,91,125]
-    trajectory, s_uniform, kappa = track.generating_spatial_reference(nodes)
-
-    yaw_hist = np.load('yaw_hist.npy')
-    n = yaw_hist.shape[0]
-    plt.plot(yaw_hist, label='actual')
-    plt.plot(trajectory[4,:n], label='ref')
-    plt.legend()
-    plt.show()
-    exit(0)
     
-    s_current = 2.0
-    #traj_local, s_local, kappa_local = track.generating_online_spatial_ref(s_current)
-    #np.save("path1.npy", y_ref) #np.load("path.npy") 
-    plot_full_trajectory(trajectory, ds, label='Car Path')
-    plot_trajectory_in_space(trajectory, label='Car Path')
+    print("Initializing Trajectory Generator...")
+    track = TrajectoryGeneration(ds, N_horizon)
+    
+    # Single path test
+    nodes = [73, 97, 125]
+    print(f"\n{'='*50}")
+    print(f"Generating trajectory with nodes: {nodes}")
+    print(f"{'='*50}")
+    
+    # Generate trajectory
+    trajectory, s_uniform, kappa = track.generating_spatial_reference(nodes)
+    
+    print(f"Trajectory shape: {trajectory.shape}")
+    print(f"Path length: {s_uniform[-1]:.2f} meters")
+    print(f"Number of points: {len(s_uniform)}")
+    print(f"Sampling distance: {ds} meters")
+    
+    # Create comprehensive visualization
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    fig.suptitle('Trajectory Generation Analysis', fontsize=16, fontweight='bold')
+    
+    # 1. Spatial trajectory (main plot)
+    axes[0,0].plot(trajectory[2, :], trajectory[3, :], 'b-', linewidth=2, label='Reference path')
+    axes[0,0].plot(trajectory[2, 0], trajectory[3, 0], 'go', markersize=10, label='Start', markeredgecolor='black')
+    axes[0,0].plot(trajectory[2, -1], trajectory[3, -1], 'ro', markersize=10, label='End', markeredgecolor='black')
+    
+    # Mark node positions if available
+    for i, node in enumerate(nodes):
+        axes[0,0].plot(trajectory[2, i*len(s_uniform)//len(nodes)], 
+                      trajectory[3, i*len(s_uniform)//len(nodes)], 
+                      's', color='orange', markersize=8, label=f'Node {node}' if i == 0 else "")
+    
+    axes[0,0].set_xlabel('X [m]')
+    axes[0,0].set_ylabel('Y [m]')
+    axes[0,0].set_title('Spatial Trajectory')
+    axes[0,0].legend()
+    axes[0,0].grid(True, alpha=0.3)
+    axes[0,0].axis('equal')
+    
+    # 2. Heading angle
+    axes[0,1].plot(s_uniform, np.degrees(trajectory[4, :]), 'g-', linewidth=2)
+    axes[0,1].set_xlabel('Arc Length [m]')
+    axes[0,1].set_ylabel('Heading [degrees]')
+    axes[0,1].set_title('Heading Angle')
+    axes[0,1].grid(True, alpha=0.3)
+    
+    # 3. Curvature
+    axes[0,2].plot(s_uniform, kappa, 'r-', linewidth=2)
+    axes[0,2].set_xlabel('Arc Length [m]')
+    axes[0,2].set_ylabel('Curvature [1/m]')
+    axes[0,2].set_title('Path Curvature')
+    axes[0,2].grid(True, alpha=0.3)
+    
+    # 4. Velocity profile
+    axes[1,0].plot(s_uniform, trajectory[5, :], 'purple', linewidth=2)
+    axes[1,0].set_xlabel('Arc Length [m]')
+    axes[1,0].set_ylabel('Velocity [m/s]')
+    axes[1,0].set_title('Velocity Profile')
+    axes[1,0].grid(True, alpha=0.3)
+    
+    # 5. Errors (should be zero for reference)
+    axes[1,1].plot(s_uniform, trajectory[0, :], 'orange', linewidth=2, label='Heading error')
+    axes[1,1].plot(s_uniform, trajectory[1, :], 'brown', linewidth=2, label='Cross-track error')
+    axes[1,1].set_xlabel('Arc Length [m]')
+    axes[1,1].set_ylabel('Error [rad/m]')
+    axes[1,1].set_title('Reference Errors')
+    axes[1,1].legend()
+    axes[1,1].grid(True, alpha=0.3)
+    
+    # 6. Online reference generation demonstration
+    s_test_points = [0.5, s_uniform[-1]/3, 2*s_uniform[-1]/3]
+    colors = ['red', 'blue', 'green']
+    
+    axes[1,2].plot(trajectory[2, :], trajectory[3, :], 'k-', alpha=0.3, label='Full trajectory')
+    
+    for i, s_current in enumerate(s_test_points):
+        if s_current < s_uniform[-1]:
+            online_traj = track.generating_online_spatial_ref(s_current)
+            axes[1,2].plot(online_traj[2, :], online_traj[3, :], 
+                          color=colors[i], linewidth=3, 
+                          label=f'Horizon @ s={s_current:.1f}m')
+            axes[1,2].plot(online_traj[2, 0], online_traj[3, 0], 
+                          'o', color=colors[i], markersize=8, markeredgecolor='black')
+    
+    axes[1,2].set_xlabel('X [m]')
+    axes[1,2].set_ylabel('Y [m]')
+    axes[1,2].set_title('Online Reference Generation\n(Prediction Horizon)')
+    axes[1,2].legend()
+    axes[1,2].grid(True, alpha=0.3)
+    axes[1,2].axis('equal')
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Print detailed statistics
+    print(f"\nPath Statistics:")
+    print(f"  - Total length: {s_uniform[-1]:.2f} m")
+    print(f"  - Max curvature: {np.max(np.abs(kappa)):.3f} 1/m")
+    print(f"  - Min curvature: {np.min(np.abs(kappa)):.3f} 1/m")
+    print(f"  - Max heading: {np.degrees(np.max(trajectory[4, :])):.1f}°")
+    print(f"  - Min heading: {np.degrees(np.min(trajectory[4, :])):.1f}°")
+    print(f"  - Velocity: constant {trajectory[5, 0]:.1f} m/s")
+    
+    # Test online reference generation
+    print(f"\n{'='*50}")
+    print("Testing Online Reference Generation")
+    print(f"{'='*50}")
+    
+    test_s = 1.5  # Test point at 1.5 meters along the path
+    if test_s <= s_uniform[-1]:
+        online_ref = track.generating_online_spatial_ref(test_s)
+        print(f"Online reference at s={test_s:.1f}m:")
+        print(f"  - Returns {online_ref.shape[1]} horizon points")
+        print(f"  - Start position: ({online_ref[2, 0]:.2f}, {online_ref[3, 0]:.2f})")
+        print(f"  - End position: ({online_ref[2, -1]:.2f}, {online_ref[3, -1]:.2f})")
+        print(f"  - Start heading: {np.degrees(online_ref[4, 0]):.1f}°")
+    else:
+        print(f"Test point s={test_s:.1f}m exceeds path length!")
+    
+    # Also show the original simple plots
+    print(f"\n{'='*50}")
+    print("Generating Basic Plots")
+    print(f"{'='*50}")
+    
+    #plot_trajectory_in_space(trajectory, label='Generated Path', title='Spatial Trajectory')
+    #plot_full_trajectory(trajectory, ds, label='State Evolution', title='Trajectory States')
