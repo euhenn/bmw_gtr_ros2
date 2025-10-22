@@ -3,16 +3,29 @@ from acados_template import AcadosOcp, AcadosOcpSolver, AcadosSimSolver, AcadosM
 import numpy as np
 import scipy.linalg
 import matplotlib.pyplot as plt
-from casadi import SX, vertcat, cos, sin, tan, arctan, interpolant
-from reference_generation2 import TrajectoryGeneration
+from casadi import SX, vertcat, cos, sin, tan, arctan, interpolant, fabs
+from reference_generation2dyn import TrajectoryGeneration
 
 
-class MPC_KinematicBicycle:
+class MPC_DynamicBicycle:
     def __init__(self, ds, N_horizon=50, nodes=[73, 91, 125]): # [459,418]
         # vehicle parameters
         self.lf = 0.13  # distance from CoG to front wheels
         self.lr = 0.13  # distance from CoG to rear wheels
         self.L = self.lf + self.lr  # wheelbase
+        self.m = 1.415
+        self.I_z = 0.17423
+        self.Bcf, self.Ccf, self.Dcf =  0.4, 1.3, 6.94
+        self.Bcr, self.Ccr, self.Dcr = 0.4, 1.3, 6.94
+
+        self.g = 9.81
+        self.mi = 0.9
+
+        #air charachteristics
+        self.ro = 1.225
+        self.Cz = -0.4
+        self.Az=  0.5
+
 
         # MPC parameters
         self.ds = ds
@@ -28,51 +41,81 @@ class MPC_KinematicBicycle:
         self.X0 = self.trajectory[:, 0]
 
         #model = self.Spatial_KinematiBicycleModel()
-        ocp = self.CreateOcpSolver_SpatialKin()
+        ocp = self.CreateOcpSolver_SpatialDyn()
         self.acados_solver = AcadosOcpSolver(ocp, json_file="acados_ocp.json")
 
 
     # ------------------ MODEL ------------------
-    def Spatial_KinematicBicycleModel(self):
+    def SpatialDynamicBicycle(self)-> AcadosOcp:
+        model_name = "SpatialDynamicBicycle"
+
         s = SX.sym('s')
         x = SX.sym('x')
         y = SX.sym('y')
         psi = SX.sym('psi')
-        v= SX.sym("v")
+        vx  = SX.sym('vx')
+        vy  = SX.sym('vy')
         e_psi = SX.sym('e_psi')
         e_y = SX.sym('e_y')
-        x = vertcat(e_psi, e_y, x, y, psi, v)
+        omega  = SX.sym('r')
+        x = vertcat(e_psi, e_y, x, y, vx, vy, psi, omega)
 
+        # Controls: steering angle delta, acceleration a
         a= SX.sym("a")
         delta = SX.sym("delta")
         u = vertcat(a, delta)
 
+        # xdot
         s_dot = SX.sym("s_dot")
         x_dot = SX.sym("x_dot")
         y_dot = SX.sym("y_dot")
+        vx_dot = SX.sym("vx_dot")
+        vy_dot = SX.sym("vy_dot")
         psi_dot = SX.sym("psi_dot")
-        v_dot = SX.sym("v_dot")
+        omega_dot   = SX.sym('omega_dot')
         e_psi_dot = SX.sym('e_psi_dot')
         e_y_dot = SX.sym('e_y_dot')
-        xdot = vertcat(e_psi_dot, e_y_dot, x_dot, y_dot, psi_dot,v_dot)
+        xdot = vertcat(e_psi_dot, e_y_dot, x_dot, y_dot,vx_dot, vy_dot, psi_dot,omega_dot)
 
-        beta = arctan(self.lr * tan(delta) / self.L)
-        vx = v* cos(psi+beta)
-        vy = v* sin(psi+beta)
-        dpsi = v *sin(beta) / self.lr
+        beta = arctan(vy/(vx+1e-5)) # slipping angle
+        # Slip angles  -  aprox of small angles
+        beta_f = - arctan((vy + self.lf*omega)/(vx+1e-5)) + delta #+np.pi/2
+        beta_r = arctan((vy - self.lr*omega)/(vx+1e-5))
         
+        Fx_d = 1/2*self.ro* self.Cz* self.Az* vx*fabs(vx)
+        # Lateral tire forces - simplified Pacejka # forget about them, try 
+        Fc_f = -self.mi *self.Dcf * sin( self.Ccf * arctan(1/self.mi *self.Bcf * beta_f) )
+        Fc_r = - self.mi * self.Dcr * sin( self.Ccr * arctan(1/self.mi * self.Bcr * beta_r) )
+
+        Fyf = Fc_f*cos(delta)
+        Fyr = Fc_r
+        
+        # DYNAMICS
+        dX   = vx*cos(psi) - vy*sin(psi)
+        dY  = vx*sin(psi) + vy*cos(psi)
+        dvx   = vy*omega + a +  (-Fx_d - Fc_f*sin(delta))/self.m# we consider that this is completly longitudial acceleration
+        dvy   = - vx*omega+ (Fyf + Fyr)/self.m
+        dpsi = omega
+        domega    = (self.lf*Fyf - self.lr*Fyr)/self.I_z
+
+
         #Spatial dynamics dx/ds = f(x,u)
-        sdot = (v *cos(beta) * cos(e_psi) - v *sin(beta) *sin(e_psi))/(1 - self.kappa(s)* e_y)
-        dx_ds    = vx / (sdot)
-        dy_ds    = vy / (sdot)
-        dv_ds    = a / (sdot)
+        sdot = (vx * cos(e_psi) - vy *sin(e_psi))/(1 - self.kappa(s)* e_y)
+        
+        dx_ds    = dX / (sdot)
+        dy_ds    = dY / (sdot)
+        dvx_ds    = dvx/ (sdot)
+        dvy_ds    = dvy/ (sdot)
         dpsi_ds  = (dpsi) / (sdot)
+        domega_ds  = (domega) / (sdot)
         d_e_psi = (dpsi)/(sdot) - self.kappa(s)
-        d_e_y = (v *cos(beta)  * sin(e_psi) + v *sin(beta) * cos(e_psi)) / (sdot)
-        f_expl = vertcat(d_e_psi, d_e_y, dx_ds, dy_ds, dpsi_ds, dv_ds)
+        d_e_y = (vx  * sin(e_psi) + vy* cos(e_psi)) / (sdot)
+        f_expl = vertcat(d_e_psi, d_e_y, dx_ds, dy_ds,dvx_ds, dvy_ds, dpsi_ds, domega_ds)
         f_impl = xdot - f_expl
 
+        # algebraic variables
         z = vertcat([])
+        # parameters
         p = vertcat(s)
 
         model = AcadosModel()
@@ -82,16 +125,17 @@ class MPC_KinematicBicycle:
         model.xdot = xdot
         model.u = u 
         model.p = p
-        model.x_labels = ["$e_psi$", "$e_y$","$x$", "$y$", "$\\psi$", "$v$"]
+        model.x_labels = ["$e_psi$", "$e_y$","$x$", "$y$",  "$v_x$",  "$v_y$", "$\\psi$", "$omega$"]
         model.u_labels = [ "$a$", "$delta$"]
         model.p_labels    = ["$s$"] 
-        model.name = "SpatialKinematicBicycle_model"
+        model.name = model_name
         return model
 
     # ------------------ OCP SOLVER ------------------
-    def CreateOcpSolver_SpatialKin(self) -> AcadosOcp:
+  
+    def CreateOcpSolver_SpatialDyn(self) -> AcadosOcp:
         ocp = AcadosOcp()
-        model = self.Spatial_KinematicBicycleModel()
+        model = self.SpatialDynamicBicycle()
         ocp.model = model
         nx = model.x.rows()
         nu = model.u.rows()
@@ -99,38 +143,42 @@ class MPC_KinematicBicycle:
         ny_e = 3
 
         ocp.solver_options.N_horizon = self.N_horizon
-        Q_mat = np.diag([5*1e3,1e2,1e1])  
-        R_mat =  np.diag([1e-2,1e-3])
+        Q_mat = np.diag([1e2,5*1e1,1e0])  
+        R_mat =  np.diag([1e-1,1e-1])
 
+        #path const
         ocp.cost.cost_type = "NONLINEAR_LS"
         ocp.cost.W = scipy.linalg.block_diag(Q_mat, R_mat)
         ocp.cost.yref = np.zeros((ny,))
-        ocp.model.cost_y_expr = vertcat(model.x[0]+arctan(self.lr*tan(model.u[1])/self.L),model.x[1], model.x[-1], model.u) #
-
+        ocp.model.cost_y_expr = vertcat(model.x[0]+ arctan(model.x[5]/ (model.x[4]+1e-5)), model.x[1],model.x[4], model.u) #
+    
+        #terminal costs
         ocp.cost.cost_type_e = "NONLINEAR_LS"
-        ocp.cost.W_e = np.diag([5*1e3,1e2, 1e1]) * self.ds
-        yref_e = np.array([0.0, 0.0, 0.25]) 
+        Q_mat = np.diag([1e2,5*1e1])
+        ocp.cost.W_e = Q_mat*self.ds
+        yref_e = np.array([0.0, 0.0]) 
         ocp.cost.yref_e = yref_e
-        ocp.model.cost_y_expr_e = vertcat(model.x[:2], model.x[-1]) 
+        ocp.model.cost_y_expr_e = vertcat(model.x[0]+ arctan(model.x[5]/ (model.x[4]+1e-5)), model.x[1]) 
     
         ocp.parameter_values  = np.array([self.s_ref[0]])
-                                                                                                           
+        # set constraints on the input                                                                                                             
         ocp.constraints.lbu = np.array([-1, -np.deg2rad(28)])
         ocp.constraints.ubu = np.array([1, np.deg2rad(28)])
         ocp.constraints.idxbu = np.array([0, 1])
         ocp.constraints.x0 = self.X0
 
-        ocp.constraints.lbx = np.array([ -np.deg2rad(30), -0.30])
-        ocp.constraints.ubx = np.array([ np.deg2rad(30), 0.30])
+        # constraints on the states
+        ocp.constraints.lbx = np.array([ -np.deg2rad(45), -0.5])
+        ocp.constraints.ubx = np.array([ np.deg2rad(45), 0.5])
         ocp.constraints.idxbx = np.array([0,1])
 
+        # set options
         ocp.solver_options.qp_solver = "FULL_CONDENSING_QPOASES" 
         ocp.solver_options.hessian_approx = "GAUSS_NEWTON"
         ocp.solver_options.integrator_type = "ERK"
         ocp.solver_options.nlp_solver_type = "SQP_RTI"
         ocp.solver_options.tf = self.Tf
         return ocp
-
 
 
     def set_initial_state(self, x0):
@@ -148,9 +196,9 @@ class MPC_KinematicBicycle:
         if i + self.N_horizon >= len(self.s_ref):
             print("Index out of range risk!")
         for j in range(self.N_horizon):
-            self.acados_solver.set(j, "yref", np.concatenate([self.trajectory[:2, i+j], [self.trajectory[-1, i+j]], np.array([0.0, 0.0])]))
+            self.acados_solver.set(j, "yref", np.concatenate([self.trajectory[:2, i+j], [self.trajectory[4, i+j]], np.array([0.0, 0.0])]))
             self.acados_solver.set(j, "p", np.array([self.s_ref[i + j]]))
-        self.acados_solver.set(self.N_horizon, "yref", np.concatenate([self.trajectory[:2, i+self.N_horizon],[self.trajectory[-1, i+self.N_horizon]] ]))
+        self.acados_solver.set(self.N_horizon, "yref", self.trajectory[:2, i+self.N_horizon])
         self.acados_solver.set(self.N_horizon, "p", np.array([self.s_ref[i+ self.N_horizon]]))
 
     def solve(self, state, idx, a=None, delta = None):

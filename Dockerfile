@@ -1,5 +1,5 @@
 
-FROM ubuntu:20.04
+FROM osrf/ros:foxy-desktop
 
 # Set environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -19,6 +19,7 @@ RUN apt-get update && \
     gnupg2 \
     lsb-release \
     python3-pip \
+    python3-tk \
     python3-argcomplete \
     software-properties-common
 
