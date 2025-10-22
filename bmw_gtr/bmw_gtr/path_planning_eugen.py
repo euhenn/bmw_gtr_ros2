@@ -291,7 +291,7 @@ class PathPlanning:
             resized_roi = cv.resize(roi, (width, height), interpolation=cv.INTER_AREA)
 
             cv.imshow("Path passing through the specified nodes", resized_roi)
-            cv.waitKey(0)
+            
 
     def plot_path_and_curvature(self, show_map=False, figsize=(10, 8)):
         """
