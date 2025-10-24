@@ -49,7 +49,7 @@ EOF
                 'worlds',
                 'bfmc_track.world'
             ]),
-            'verbose': 'true',  # Add verbose for debugging
+            'verbose': 'false',  # Add verbose for debugging
             'gdb': 'false'      # Disable gdb for now
         }.items()
     )

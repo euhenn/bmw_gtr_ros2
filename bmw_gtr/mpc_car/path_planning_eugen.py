@@ -262,7 +262,7 @@ class PathPlanning:
             self.clothoids,
         ) = PathPlanning.interpolate_route(self.route_list, step_length)
 
-        print(f"[INFO] Path generated: {len(self.s_ref)} points, {len(self.clothoids)} clothoids")
+        #print(f"[INFO] Path generated: {len(self.s_ref)} points, {len(self.clothoids)} clothoids")
         return self.s_ref, self.x_ref, self.y_ref, self.psi_ref, self.kappa_ref, self.clothoids
 
 

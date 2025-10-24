@@ -27,7 +27,7 @@ def generate_launch_description():
                 "models/m3_gtr/model.sdf"
             ]),
             "-x", "0.40646722",
-            "-y", "6.430996",
+            "-y", "6.00430996",
             "-z", "0.0309",
             "-Y", "-1.57"
         ],
@@ -41,8 +41,8 @@ def generate_launch_description():
     )
 
     delayed_delete = TimerAction(period=1.0, actions=[delete_entity])
-    delayed_spawn = TimerAction(period=5.0, actions=[spawn_entity])
-    delayed_script = TimerAction(period=5.0, actions=[run_controller_script])
+    delayed_spawn = TimerAction(period=4.0, actions=[spawn_entity])
+    delayed_script = TimerAction(period=6.0, actions=[run_controller_script])
 
     return LaunchDescription([
         delayed_delete,
