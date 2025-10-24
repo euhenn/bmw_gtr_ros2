@@ -36,7 +36,7 @@ def generate_launch_description():
 
     # Run controller script
     run_controller_script = ExecuteProcess(
-        cmd=["python3", "/ros2_ws/src/bmw_gtr/bmw_gtr/main_brain_eugen.py"],
+        cmd=["python3", "/ros2_ws/src/bmw_gtr/mpc_car/main_brain.py"],
         output="screen"
     )
 
