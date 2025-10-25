@@ -53,7 +53,7 @@ class CarControllerNode(Node):
         self.car.drive_speed(0.0)
 
         # --- Initialize MPC ---
-        self.mpc = MPC_KinematicBicycle(ds=0.05, N_horizon=40)
+        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=30)
 
         # --- Initialize control variables ---
         self.get_logger().info(f"Control loop target rate: {TARGET_FPS} Hz")
@@ -73,8 +73,10 @@ class CarControllerNode(Node):
     # ---------------------------------------------------------------
     def get_current_state(self):
         """Return [x, y, yaw, v]."""
-        x = float(self.car.x_true)
-        y = float(self.car.y_true)
+        #x = float(self.car.x_true)
+        #y = float(self.car.y_true)
+        x = float(self.car.x_est)
+        y = float(self.car.y_est)
         yaw = float(self.car.yaw_true)
         v = float(self.car.filtered_encoder_velocity)
         return np.array([x, y, yaw, v])
@@ -161,19 +163,23 @@ class CarControllerNode(Node):
                 x_pred = x + v * np.cos(yaw + beta) * delay_sec
                 y_pred = y + v * np.sin(yaw + beta) * delay_sec
                 yaw_pred = yaw + (v / L) * np.sin(beta) / np.cos(beta) * delay_sec
-                v_pred = max(0.0, v + a_prev * delay_sec)  # TODO: Check if still needed, used for start up
+                v_pred = v + a_prev * delay_sec
+                if v_pred < 0.0:
+                    v_pred = 0.0
+                elif v < 0.05 and a_prev > 0.0:
+                    v_pred = max(v_pred, 0.05)
 
                 # === 3. Transform to spatial coordinates ===
                 state_ocp, idx = self.mpc.get_state(x_pred, y_pred, yaw_pred, v_pred)
                 e_psi, e_y = state_ocp[0], state_ocp[1]
 
                 # === 4. Solve MPC ===
-                a_cmd, delta_cmd = self.mpc.solve(state_ocp, idx + 1,
-                                                  warm_start=np.array([a_prev, delta_prev]))
+                a_cmd, delta_cmd = self.mpc.solve(state_ocp, idx + 10,
+                                                  warm_start=None)#np.array([a_prev, delta_prev]))
 
                 # === 5. Integrate control & apply ===
 
-                v_cmd = v + (a_cmd * DT)
+                v_cmd = max(0, v + (a_cmd * loop_duration))
                 self.apply_control(v_cmd, delta_cmd)
 
                 a_prev, delta_prev = a_cmd, delta_cmd
@@ -195,9 +201,16 @@ class CarControllerNode(Node):
 
             # === 7. FPS limiter ===
             loop_duration = time.time() - loop_start
-            target_period = 1.0 / TARGET_FPS
-            if loop_duration < target_period:
-                time.sleep(target_period - loop_duration)
+            target_period = 1.0 / TARGET_FPS # 0.066666 secods
+            if loop_duration < target_period: 
+                #time.sleep(target_period - loop_duration)
+                self.get_logger().warn(
+                    f"        Loop: took {loop_duration:.3f}s"
+                )
+            else:
+                self.get_logger().warn(
+                    f"Loop overrun: took {loop_duration:.3f}s > {target_period:.3f}s"
+                )
 
     # ---------------------------------------------------------------
     # SHUTDOWN

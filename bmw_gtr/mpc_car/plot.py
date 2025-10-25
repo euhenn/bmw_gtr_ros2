@@ -32,6 +32,28 @@ e_y = data["e_y"].to_numpy()
 e_psi = data["e_psi"].to_numpy()
 a_cmd = data["a_cmd"].to_numpy()
 
+
+
+
+nodes_to_visit = [73, 97, 125, 150]
+traj_gen = TrajectoryGeneration(ds=0.1, N_horizon=50, v_max=0.5, v_min=0.3, use_curvature_velocity=True, smooth_velocity=True)
+# Draw points on path
+traj_gen.planner.draw_path_nodes(traj_gen.planner.route_list)
+# Draw whole path
+full_path = np.column_stack((traj_gen.planner.x_ref, traj_gen.planner.y_ref))
+traj_gen.planner.draw_path(full_path)
+
+#path by car
+path_xy = np.column_stack((x, y))
+traj_gen.planner.draw_path(np.array([path_xy], dtype=np.float32), color=(0, 255, 255), thickness=3)
+
+# Show map
+traj_gen.planner.show_map_resized(roi_height_ratio=0.80, roi_width_ratio=0.35, scale=0.3)
+cv.waitKey(0)
+
+
+
+
 # === --- PLOT 1: Errors (lateral + heading) --- ===
 plt.figure(figsize=(10, 5))
 plt.plot(t, e_y, label="Lateral Error $e_y$ [m]", color="#0077b6", linewidth=2)
@@ -78,19 +100,5 @@ plt.show()
 
 
 
-# nodes_to_visit = [73, 97, 125, 150]
-# traj_gen = TrajectoryGeneration(ds=0.1, N_horizon=50, v_max=0.5, v_min=0.3, use_curvature_velocity=True, smooth_velocity=True)
-# # Draw points on path
-# traj_gen.planner.draw_path_nodes(traj_gen.planner.route_list)
-# # Draw whole path
-# full_path = np.column_stack((traj_gen.planner.x_ref, traj_gen.planner.y_ref))
-# traj_gen.planner.draw_path(full_path)
 
-# #path by car
-# path_xy = np.column_stack((x, y))
-# traj_gen.planner.draw_path(np.array([path_xy], dtype=np.float32), color=(0, 255, 255), thickness=3)
-
-# # Show map
-# traj_gen.planner.show_map_resized(roi_height_ratio=0.55, roi_width_ratio=0.35, scale=0.5)
-# cv.waitKey(0)
-# cv.destroyAllWindows()
+cv.destroyAllWindows()

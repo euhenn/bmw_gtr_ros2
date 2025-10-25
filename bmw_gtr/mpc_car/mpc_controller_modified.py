@@ -24,7 +24,7 @@ class MPC_KinematicBicycle:
         self.lf, self.lr = 0.13, 0.12
         self.L = self.lf + self.lr
         self.ds, self.N_horizon = ds, N_horizon
-        self.Tf = 1 #N_horizon * ds
+        self.Tf = N_horizon * ds
 
         self._load_reference(nodes)
         self._build_solver()
@@ -33,7 +33,7 @@ class MPC_KinematicBicycle:
     # Reference trajectory
     # ----------------------------------------------------------
     def _load_reference(self, nodes):
-        self.traj_gen = TrajectoryGeneration(self.ds, self.N_horizon,use_curvature_velocity=False, v_max=0.8, v_min=0.2, smooth_velocity=True)
+        self.traj_gen = TrajectoryGeneration(self.ds, self.N_horizon,use_curvature_velocity=False, v_max=0.4, v_min=0.2, smooth_velocity=True)
         self.traj, self.s_ref, kappa_ref = self.traj_gen.generating_spatial_reference(nodes)
         self.kappa = interpolant("kappa", "bspline", [self.s_ref], kappa_ref)
         self.x0 = self.traj[:, 0]
@@ -54,6 +54,7 @@ class MPC_KinematicBicycle:
         vx, vy = v * cos(psi + beta), v * sin(psi + beta)
         dpsi = v * sin(beta) / self.lr
         #sdot = (v * cos(beta) * cos(epsi) - v * sin(beta) * sin(epsi)) / (1 - self.kappa(s) * ey)
+        # in _make_model()
         eps = 2e-3
         sdot = (v * cos(beta) * cos(epsi) - v * sin(beta) * sin(epsi))
         sdot = sdot / (1 - self.kappa(s) * ey + eps)
@@ -92,17 +93,14 @@ class MPC_KinematicBicycle:
 
     def _configure_costs(self, ocp, nx, nu):
 
-        #DON T MODIFY
+
         Q = np.diag([5e3, 1e2, 5e0])   
         R = np.diag([2e-2, 1e2])      
-        #DON T MODIFY (VIDEO 2025.10.25 used at 11:12)
-        Q = np.diag([5e3, 1e2, 5e-1])   
-        R = np.diag([2e-2, 1e2])    
-
-        Q = np.diag([5e3, 1e2, 5e-1])   
-        R = np.diag([2e-2, 1e2])    
-
-        ocp.cost.W_e = np.diag([5e3, 1e2]) * self.ds
+        ocp.cost.W_e = np.diag([5e3, 1e2]) 
+        
+        #Q = np.diag([5e3, 1e2, 5e-1])
+        #R = np.diag([7e-2, 1e-2])
+        #ocp.cost.W_e = np.diag([5e3, 1e2]) * self.ds
 
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
         

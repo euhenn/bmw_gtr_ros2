@@ -570,7 +570,7 @@ if __name__ == "__main__":
 
 
     # Example car state
-    x, y, yaw = 2.5, 1.2, np.deg2rad(280)
+    x, y, yaw = 2.5, 4.2, np.deg2rad(280)
     yaw = (yaw + np.pi) % (2 * np.pi) - np.pi  # wrap yaw
 
     # Convert to spatial domain (no more s_ref, psi_ref, clothoids args)

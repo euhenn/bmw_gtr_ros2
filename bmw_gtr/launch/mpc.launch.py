@@ -27,7 +27,7 @@ def generate_launch_description():
                 "models/m3_gtr/model.sdf"
             ]),
             "-x", "0.40646722",
-            "-y", "6.00430996",
+            "-y", "5.50430996",
             "-z", "0.0309",
             "-Y", "-1.57"
         ],
