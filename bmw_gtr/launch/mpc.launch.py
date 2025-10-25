@@ -26,8 +26,8 @@ def generate_launch_description():
                 FindPackageShare("bmw_gtr"),
                 "models/m3_gtr/model.sdf"
             ]),
-            "-x", "0.40646722",
-            "-y", "5.50430996",
+            "-x", "17.4925", #"0.40646722", 
+            "-y", "13.3131",#"5.50430996",
             "-z", "0.0309",
             "-Y", "-1.57"
         ],
