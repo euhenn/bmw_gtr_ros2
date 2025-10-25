@@ -23,6 +23,8 @@ class CarControllerNode(Node):
     def __init__(self):
         super().__init__('car_controller_node')
 
+        self.loop_durations = []
+
         # --- Logging setup ---
         log_dir = "logs"
         os.makedirs(log_dir, exist_ok=True)
@@ -89,60 +91,7 @@ class CarControllerNode(Node):
     # ---------------------------------------------------------------
     # MAIN CONTROL LOOP (WITH FPS LIMITER)
     # ---------------------------------------------------------------
-    def run_old(self):
-        self.get_logger().info("Starting main control loop...")
-        a_prev, delta_prev = 0.0, 0.0
-        loop_duration = 0
-        while rclpy.ok():
-            loop_start = time.time()  # start timing
-            
-            try:
-                # === 1. Get current state ===
-                x, y, yaw, v = self.get_current_state()
-
-                # === 2. Transform to spatial coordinates ===
-                state_ocp, idx = self.mpc.get_state(x, y, yaw, v)
-                e_psi, e_y = state_ocp[0], state_ocp[1]
-
-                # === 3. Solve MPC ===
-                a_cmd, delta_cmd = self.mpc.solve(state_ocp, idx + 1, warm_start=np.array([a_prev, delta_prev]))
-
-                # === 4. Integrate control & apply ===
-                loop_duration = time.time() - loop_start
-                v_cmd =  v + (a_cmd * loop_duration)
-                self.apply_control(v_cmd, delta_cmd)
-                a_prev, delta_prev = a_cmd, delta_cmd
-
-                # === 5.a. Log info ===
-                #print(f"v={v:.3f} → {v_next:.3f} | a={a_cmd:.3f} m/s2 | δ={np.rad2deg(delta_cmd):.2f}°")
-                #print(f"idx={idx} | e_y={e_y:.4f} m | e_psi={np.rad2deg(e_psi):.2f}°")
-
-            except Exception as e:
-                self.get_logger().error(f"Control loop error: {e}")
-                self.apply_control(0.0, 0.0)
-                break
-
-            # === 5.b. Log info ===
-            #v_ref = self.mpc.traj[-1, min(idx, self.mpc.traj.shape[1] - 1)]
-            self.log_writer.writerow(map(float, [
-                time.time(),
-                idx,
-                x, y, yaw, v, self.car.curr_steer,
-                e_psi, e_y,
-                a_cmd, delta_cmd,
-                v_cmd
-            ]))
-
-            # === 6. FPS limiter ===
-            #loop_duration = time.time() - loop_start
-            target_period = 1.0 / TARGET_FPS
-            # if loop_duration < target_period:
-                # time.sleep(target_period - loop_duration)
-              
-            # else:
-                # self.get_logger().warn(
-                    # f"Loop overrun: took {loop_duration:.3f}s > {target_period:.3f}s"
-                # )
+    
     def run(self):
         self.get_logger().info("Starting main control loop...")
         a_prev, delta_prev = 0.0, 0.0
@@ -156,21 +105,25 @@ class CarControllerNode(Node):
                 # === 1. Get current state ===
                 x, y, yaw, v = self.get_current_state()
 
-                # === 2. Predict future state after delay ===
-                # Simple kinematic bicycle forward propagation for delay_sec seconds
-                L = self.mpc.L
-                beta = np.arctan(self.mpc.lr * np.tan(delta_prev) / self.mpc.L)
-                x_pred = x + v * np.cos(yaw + beta) * delay_sec
-                y_pred = y + v * np.sin(yaw + beta) * delay_sec
-                yaw_pred = yaw + (v / L) * np.sin(beta) / np.cos(beta) * delay_sec
-                v_pred = v + a_prev * delay_sec
-                if v_pred < 0.0:
-                    v_pred = 0.0
-                elif v < 0.05 and a_prev > 0.0:
-                    v_pred = max(v_pred, 0.05)
+                if (True):
+                    # === 2. Predict future state to compensate for delay ===
+                    # Simple kinematic bicycle forward propagation for delay_sec seconds
+                    L = self.mpc.L
+                    beta = np.arctan(self.mpc.lr * np.tan(delta_prev) / self.mpc.L)
+                    x_pred = x + v * np.cos(yaw + beta) * delay_sec
+                    y_pred = y + v * np.sin(yaw + beta) * delay_sec
+                    yaw_pred = yaw + (v / L) * np.sin(beta) / np.cos(beta) * delay_sec
+                    v_pred = v + a_prev * delay_sec
+                    if v_pred < 0.0:
+                        v_pred = 0.0
+                    elif v < 0.05 and a_prev > 0.0:
+                        v_pred = max(v_pred, 0.05)
+                    state_ocp, idx = self.mpc.get_state(x_pred, y_pred, yaw_pred, v_pred)
+                else:
+                    # === 2. Transform to spatial coordinates ===#
+                    state_ocp, idx = self.mpc.get_state(x, y, yaw, v)
 
-                # === 3. Transform to spatial coordinates ===
-                state_ocp, idx = self.mpc.get_state(x_pred, y_pred, yaw_pred, v_pred)
+                # === 3. Use the spatial coordinates ===
                 e_psi, e_y = state_ocp[0], state_ocp[1]
 
                 # === 4. Solve MPC ===
@@ -201,16 +154,17 @@ class CarControllerNode(Node):
 
             # === 7. FPS limiter ===
             loop_duration = time.time() - loop_start
+            self.loop_durations.append(loop_duration)
             target_period = 1.0 / TARGET_FPS # 0.066666 secods
             if loop_duration < target_period: 
-                #time.sleep(target_period - loop_duration)
+                time.sleep(target_period - loop_duration)
                 self.get_logger().warn(
                     f"        Loop: took {loop_duration:.3f}s"
                 )
             else:
-                self.get_logger().warn(
-                    f"Loop overrun: took {loop_duration:.3f}s > {target_period:.3f}s"
-                )
+               self.get_logger().warn(
+                   f"Loop overrun: took {loop_duration:.3f}s > {target_period:.3f}s"
+               )
 
     # ---------------------------------------------------------------
     # SHUTDOWN
@@ -224,6 +178,16 @@ class CarControllerNode(Node):
         if hasattr(self, "log_file"):
             self.log_file.close()
             self.get_logger().info(f"Saved MPC log to: {self.log_path}")
+
+        if len(self.loop_durations) > 0:
+            durations = np.array(self.loop_durations)
+            avg_duration = np.mean(durations)
+            min_d = np.min(durations)
+            max_d = np.max(durations)
+            self.get_logger().info(
+                f"Average loop duration: {avg_duration:.4f}s "
+                f"(min: {min_d:.4f}s, max: {max_d:.4f}s, avg freq: {1.0/avg_duration:.2f} Hz)"
+            )
 
         self.get_logger().info("Controller shutdown complete.")
 

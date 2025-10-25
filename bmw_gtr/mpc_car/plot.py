@@ -48,7 +48,7 @@ path_xy = np.column_stack((x, y))
 traj_gen.planner.draw_path(np.array([path_xy], dtype=np.float32), color=(0, 255, 255), thickness=3)
 
 # Show map
-traj_gen.planner.show_map_resized(roi_height_ratio=0.80, roi_width_ratio=0.35, scale=0.3)
+traj_gen.planner.show_map_resized(roi_height_ratio=1, roi_width_ratio=1, scale=0.3)
 cv.waitKey(0)
 
 

@@ -563,6 +563,7 @@ if __name__ == "__main__":
     map_img = cv.imread('data/2024_VerySmall.png')
     planner = PathPlanning(map_img)
     nodes_to_pass = [73, 97, 100, 130, 140]
+    nodes_to_pass = [330, 337]
 
     # Generate path (now auto-stored inside planner)
     planner.generate_path_passing_through(nodes_to_pass, step_length=0.01)
