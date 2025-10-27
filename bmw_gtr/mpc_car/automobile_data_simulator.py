@@ -193,8 +193,8 @@ class AutomobileDataSimulator(Node, Automobile_Data):
         if time_diff > 1 / MAX_STEER_COMMAND_FREQ:
             self.time_last_steer_command = curr_time
             self.steer_deque.append((angle, curr_time))
-        else:
-            self.get_logger().warn('Missed steer command...')
+        #else:
+        #    self.get_logger().warn('Missed steer command...')
 
     def drive_distance(self, dist=0.0):
         self.target_dist = self.encoder_distance + dist

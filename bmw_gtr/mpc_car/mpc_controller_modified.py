@@ -20,7 +20,7 @@ from reference_generation_velocity import TrajectoryGeneration
 
 
 class MPC_KinematicBicycle:
-    def __init__(self, ds=0.05, N_horizon=50, nodes=[330, 373, 405]):
+    def __init__(self, ds=0.05, N_horizon=50, nodes=[73, 97, 125, 150]):
         self.lf, self.lr = 0.13, 0.12
         self.L = self.lf + self.lr
         self.ds, self.N_horizon = ds, N_horizon
@@ -33,7 +33,7 @@ class MPC_KinematicBicycle:
     # Reference trajectory
     # ----------------------------------------------------------
     def _load_reference(self, nodes):
-        self.traj_gen = TrajectoryGeneration(self.ds, self.N_horizon,use_curvature_velocity=False, v_max=0.8, v_min=0.2, smooth_velocity=True)
+        self.traj_gen = TrajectoryGeneration(self.ds, self.N_horizon,use_curvature_velocity=False, v_max=0.4, v_min=0.2, smooth_velocity=True)
         self.traj, self.s_ref, kappa_ref = self.traj_gen.generating_spatial_reference(nodes)
         self.kappa = interpolant("kappa", "bspline", [self.s_ref], kappa_ref)
         self.x0 = self.traj[:, 0]
@@ -54,6 +54,7 @@ class MPC_KinematicBicycle:
         vx, vy = v * cos(psi + beta), v * sin(psi + beta)
         dpsi = v * sin(beta) / self.lr
         #sdot = (v * cos(beta) * cos(epsi) - v * sin(beta) * sin(epsi)) / (1 - self.kappa(s) * ey)
+        # in _make_model()
         eps = 2e-3
         sdot = (v * cos(beta) * cos(epsi) - v * sin(beta) * sin(epsi))
         sdot = sdot / (1 - self.kappa(s) * ey + eps)
@@ -92,21 +93,15 @@ class MPC_KinematicBicycle:
 
     def _configure_costs(self, ocp, nx, nu):
 
-        #DON T MODIFY
+
         Q = np.diag([5e3, 1e2, 5e0])   
         R = np.diag([2e-2, 1e2])      
-        #DON T MODIFY (VIDEO 2025.10.25 used at 11:12)
-        Q = np.diag([5e3, 1e2, 5e-1])   
-        R = np.diag([2e-2, 1e2])    
+        ocp.cost.W_e = np.diag([5e3, 1e2]) 
+        
+        #Q = np.diag([5e3, 1e2, 5e-1])
+        #R = np.diag([7e-2, 1e-2])
+        #ocp.cost.W_e = np.diag([5e3, 1e2]) * self.ds
 
-
-
-        Q = np.diag([5e3, 1e2, 5e-1])   
-        R = np.diag([2e-2, 1e2])    
-
-
-
-        ocp.cost.W_e = np.diag([5e3, 1e2]) * self.ds # normalizing the terminal cost so its contribution stays roughly proportional to one spatial step’s cost
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
         
         ocp.cost.cost_type = "NONLINEAR_LS"
@@ -142,26 +137,25 @@ class MPC_KinematicBicycle:
         # --- Robust QP solver ---
         ocp.solver_options.qp_solver = "PARTIAL_CONDENSING_HPIPM"
         ocp.solver_options.hessian_approx = "GAUSS_NEWTON"
-        ocp.solver_options.integrator_type = "ERK" # (‘ERK’, ‘IRK’, ‘GNSF’, ‘DISCRETE’, ‘LIFTED_IRK’)
+        ocp.solver_options.integrator_type = "ERK"
         ocp.solver_options.nlp_solver_type = "SQP_RTI"  # or "SQP" for full iterations
 
         # --- Stability & convergence tuning ---
         ocp.solver_options.globalization = "MERIT_BACKTRACKING"
-
-
-        # ocp.solver_options.qp_solver_iter_max = 50
-        # ocp.solver_options.nlp_solver_max_iter = 20
-        # ocp.solver_options.levenberg_marquardt = 1e-6
+        ocp.solver_options.qp_solver_iter_max = 50
+        ocp.solver_options.nlp_solver_max_iter = 20
+        ocp.solver_options.levenberg_marquardt = 1e-6
 
         # --- Integration method accuracy ---
-        #ocp.solver_options.sim_method_num_stages = 4 #50 nodes × 3 steps × 4 stages = 600 evaluations per solve!
-        #ocp.solver_options.sim_method_num_steps = 3
+        ocp.solver_options.sim_method_num_stages = 4
+        ocp.solver_options.sim_method_num_steps = 3
 
-        # # --- Tolerances ---
-        # ocp.solver_options.qp_solver_tol_stat = 1e-2
-        # ocp.solver_options.qp_solver_tol_eq = 1e-2
-        # ocp.solver_options.qp_solver_tol_ineq = 1e-2
-        # ocp.solver_options.qp_solver_tol_comp = 1e-2
+        # --- Tolerances ---
+        ocp.solver_options.qp_solver_tol_stat = 1e-4
+        ocp.solver_options.qp_solver_tol_eq = 1e-4
+        ocp.solver_options.qp_solver_tol_ineq = 1e-4
+        ocp.solver_options.qp_solver_tol_comp = 1e-4
+
 
     # ----------------------------------------------------------
     # Reference and solving

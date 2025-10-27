@@ -262,7 +262,7 @@ class PathPlanning:
             self.clothoids,
         ) = PathPlanning.interpolate_route(self.route_list, step_length)
 
-        print(f"[INFO] Path generated: {len(self.s_ref)} points, {len(self.clothoids)} clothoids")
+        #print(f"[INFO] Path generated: {len(self.s_ref)} points, {len(self.clothoids)} clothoids")
         return self.s_ref, self.x_ref, self.y_ref, self.psi_ref, self.kappa_ref, self.clothoids
 
 
@@ -563,6 +563,7 @@ if __name__ == "__main__":
     map_img = cv.imread('data/2024_VerySmall.png')
     planner = PathPlanning(map_img)
     nodes_to_pass = [73, 97, 100, 130, 140]
+    nodes_to_pass = [330, 337]
 
     # Generate path (now auto-stored inside planner)
     planner.generate_path_passing_through(nodes_to_pass, step_length=0.01)
@@ -570,7 +571,7 @@ if __name__ == "__main__":
 
 
     # Example car state
-    x, y, yaw = 2.5, 1.2, np.deg2rad(280)
+    x, y, yaw = 2.5, 4.2, np.deg2rad(280)
     yaw = (yaw + np.pi) % (2 * np.pi) - np.pi  # wrap yaw
 
     # Convert to spatial domain (no more s_ref, psi_ref, clothoids args)

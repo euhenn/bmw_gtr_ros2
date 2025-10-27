@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 
 class TrajectoryGeneration:
-    def __init__(self, ds=0.05, N_horizon=20, v_max=0.5, v_min=0.3, 
+    def __init__(self, ds=0.05, N_horizon=20, v_max=1.0, v_min=0.5, 
                  use_curvature_velocity=True, smooth_velocity=True):
         """
         Initialize trajectory generator.
@@ -136,9 +136,9 @@ class TrajectoryGeneration:
         self.v_ref = v_ref
         self.clothoids = clothoids
 
-        print(f"[INFO] Trajectory generated: {len(s_ref)} points, horizon {self.N_horizon}")
-        print(f"[INFO] Velocity smoothing: {self.smooth_velocity}")
-        print(f"[INFO] Velocity range: {v_ref.min():.3f} - {v_ref.max():.3f} m/s")
+        # print(f"[INFO] Trajectory generated: {len(s_ref)} points, horizon {self.N_horizon}")
+        # print(f"[INFO] Velocity smoothing: {self.smooth_velocity}")
+        # print(f"[INFO] Velocity range: {v_ref.min():.3f} - {v_ref.max():.3f} m/s")
         return trajectory, s_ref, kappa_ref
 
     # -------------------------------------------------------------
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     nodes_to_visit = [73, 97, 100, 130, 140]
 
     traj_gen = TrajectoryGeneration(ds=0.1, N_horizon=50, v_max=0.5, v_min=0.3, 
-                                  use_curvature_velocity=True, smooth_velocity=True)
+                                  use_curvature_velocity=False, smooth_velocity=True)
 
     trajectory, s_ref, kappa_ref = traj_gen.generating_spatial_reference(nodes_to_visit)
     traj_horizon = traj_gen.generating_online_spatial_ref(s_curr=0.5)
