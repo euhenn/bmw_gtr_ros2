@@ -8,17 +8,18 @@
 ```bash
 cd bmw_gtr_ros2
 #docker compose up -d
+# when having multiple compose file use flag -f to specify the compose file to execute
 docker compose -f docker-compose.pc.yml up -d
 
 ```
 
 ### 2. Access the Container
 ```bash
-# From the same directory as docker-compose.yml
-docker compose exec ros2-car bash
-
 # From any directory (using container name)
-docker exec -it ros2-car bash
+docker exec -it ros2-foxy-car bash
+
+# From the same directory as docker-compose.yml
+docker compose exec ros2-foxy-car bash
 ```
 Note, `docker compose` commands work only in the directories containing the compose file.
 
@@ -27,10 +28,10 @@ Note, `docker compose` commands work only in the directories containing the comp
 ```bash
 
 # Stop the container
-docker stop ros2-car
+docker stop ros2-foxy-car
 
 # Delete the container
-docker rm ros2-car
+docker rm ros2-foxy-car
 
 # Force to rebuild
 docker compose up -d --build
@@ -59,11 +60,11 @@ colcon build && source install/setup.bash
 ## Gazebo simulation
 Launch gazebo simulation scenario 
 ```bash
-ros2 launch bmw_gtr simulator.launch.py
+ros2 launch simulator simulator.launch.py
 ```
 if you need to remove the car from the word and spawn it at a certain coordinates use this launch file:
 ```bash
-ros2 launch bmw_gtr spawn_car.launch.py
+ros2 launch simulator spawn_car.launch.py
 ```
 
 ## Main brain

@@ -1,0 +1,107 @@
+# Base ROS 2 Foxy image for ARM64
+FROM arm64v8/ros:foxy-ros-base
+
+# ----------------------------------------------------------
+# Locale setup
+# ----------------------------------------------------------
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=en_SG.UTF-8 \
+    LC_ALL=en_SG.UTF-8
+
+RUN apt-get update && \
+    apt-get install -y locales && \
+    locale-gen en_SG.UTF-8 && \
+    update-locale LC_ALL=en_SG.UTF-8 LANG=en_SG.UTF-8
+
+# ----------------------------------------------------------
+# Core build tools and Python utilities
+# ----------------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    gnupg2 \
+    lsb-release \
+    git \
+    cmake \
+    build-essential \
+    pkg-config \
+    libomp-dev \
+    python3-pip \
+    python3-tk \
+    python3-argcomplete \
+    python3-venv \
+    python3-numpy \
+    python3-scipy \
+    python3-matplotlib \
+    software-properties-common && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ----------------------------------------------------------
+# ROS 2 core packages + colcon
+# ----------------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y \
+    python3-colcon-common-extensions \
+    ros-foxy-ros2-control \
+    ros-foxy-ros2-controllers \
+    ros-foxy-joint-state-publisher \
+    ros-foxy-vision-msgs \
+    ros-foxy-tf2-ros && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ----------------------------------------------------------
+# Python dependencies (project + MPC stack)
+# ----------------------------------------------------------
+COPY requirements_rpi.txt /tmp/requirements.txt
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-cache-dir -r /tmp/requirements.txt && \
+    pip3 install --no-cache-dir casadi networkx pyclothoids
+
+# ----------------------------------------------------------
+# Joystick / Bluetooth / Input device support (optional)
+# ----------------------------------------------------------
+RUN apt-get update && apt-get install -y \
+    bluez bluez-tools python3-evdev python3-pyudev && \
+    rm -rf /var/lib/apt/lists/*
+
+# ==========================================================
+# ACADOS (with OpenMP)
+# ==========================================================
+WORKDIR /opt
+
+RUN git clone --recursive https://github.com/acados/acados.git && \
+    cd acados && \
+    mkdir -p build && cd build && \
+    cmake -DACADOS_WITH_QPOASES=ON \
+          -DACADOS_WITH_HPMPC=OFF \
+          -DACADOS_WITH_OSQP=ON \
+          -DACADOS_WITH_OPENMP=ON .. && \
+    make install -j$(nproc)
+
+# Python interface
+RUN pip3 install -e /opt/acados/interfaces/acados_template
+
+# Environment variables
+ENV ACADOS_SOURCE_DIR=/opt/acados
+ENV PATH=/opt/acados/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/acados/lib:/usr/local/lib:$LD_LIBRARY_PATH
+
+# ==========================================================
+# Rust + tera_renderer (used by acados)
+# ==========================================================
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y && \
+    /root/.cargo/bin/cargo install --git https://github.com/acados/tera_renderer.git --root /opt/acados || true
+
+# ==========================================================
+# ROS 2 workspace setup
+# ==========================================================
+WORKDIR /ros2_ws
+
+RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
+    echo "export ACADOS_SOURCE_DIR=/opt/acados" >> ~/.bashrc && \
+    echo "export LD_LIBRARY_PATH=/opt/acados/lib:/usr/local/lib:\$LD_LIBRARY_PATH" >> ~/.bashrc && \
+    echo "alias b='cd /ros2_ws && colcon build && source install/setup.bash'" >> ~/.bashrc && \
+    echo "alias s='source /ros2_ws/install/setup.bash'" >> ~/.bashrc
+
+CMD ["bash"]

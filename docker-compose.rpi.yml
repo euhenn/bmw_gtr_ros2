@@ -1,0 +1,31 @@
+
+services:
+  mpc-ros2:
+    image: mpc-ros2
+    build: 
+        context: .
+        dockerfile: docker/Dockerfile.rpi
+    container_name: mpc-ros2
+
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ACADOS_SOURCE_DIR=/opt/acados
+      - LD_LIBRARY_PATH=/opt/acados/lib:/usr/local/lib
+
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw            
+      - ./src/brain:/ros2_ws/src/brain
+      - ./src/msgs:/ros2_ws/src/msgs           
+      - /run/udev:/run/udev:ro                      
+
+    devices:
+      - /dev/input:/dev/input                       
+      # - /dev/ttyUSB0:/dev/ttyUSB0
+
+    privileged: true  # for USB/Bluetooth
+    stdin_open: true
+    tty: true
+    network_mode: "host"
+
+    restart: unless-stopped
