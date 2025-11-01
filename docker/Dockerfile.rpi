@@ -1,4 +1,6 @@
-# Base ROS 2 Foxy image for ARM64
+# ==========================================================
+# Base ROS 2 Foxy image for ARM64 (Raspberry Pi)
+# ==========================================================
 FROM arm64v8/ros:foxy-ros-base
 
 # ----------------------------------------------------------
@@ -50,14 +52,6 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ----------------------------------------------------------
-# Python dependencies (project + MPC stack)
-# ----------------------------------------------------------
-COPY requirements_rpi.txt /tmp/requirements.txt
-RUN pip3 install --upgrade pip && \
-    pip3 install --no-cache-dir -r /tmp/requirements.txt && \
-    pip3 install --no-cache-dir casadi networkx pyclothoids
-
-# ----------------------------------------------------------
 # Joystick / Bluetooth / Input device support (optional)
 # ----------------------------------------------------------
 RUN apt-get update && apt-get install -y \
@@ -65,7 +59,7 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # ==========================================================
-# ACADOS (with OpenMP)
+# ACADOS (heavy build – do this only once)
 # ==========================================================
 WORKDIR /opt
 
@@ -87,7 +81,7 @@ ENV PATH=/opt/acados/bin:$PATH
 ENV LD_LIBRARY_PATH=/opt/acados/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
 # ==========================================================
-# Rust + tera_renderer (used by acados)
+# Rust + tera_renderer (for acados templating)
 # ==========================================================
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y && \
@@ -104,4 +98,24 @@ RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
     echo "alias b='cd /ros2_ws && colcon build && source install/setup.bash'" >> ~/.bashrc && \
     echo "alias s='source /ros2_ws/install/setup.bash'" >> ~/.bashrc
 
+# ==========================================================
+# OpenCV + final Python dependencies (placed at the end)
+# ==========================================================
+# Installing OpenCV via apt (fast and compatible with ROS2)
+RUN apt-get update && apt-get install -y \
+    python3-opencv \
+    libopencv-dev \
+    libgl1 \
+    libglib2.0-0 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy requirements at the end for faster rebuild when updated
+COPY docker/requirements_rpi.txt /tmp/requirements.txt
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-cache-dir -r /tmp/requirements.txt && \
+    pip3 install --no-cache-dir casadi networkx pyclothoids filterpy
+
+# ==========================================================
+# Default command
+# ==========================================================
 CMD ["bash"]

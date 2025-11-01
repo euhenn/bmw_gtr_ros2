@@ -1,115 +1,108 @@
-
+# ==========================================================
+# BASE IMAGE
+# ==========================================================
 FROM ubuntu:20.04
 
-# Set environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=en_SG.UTF-8 \
     LC_ALL=en_SG.UTF-8
 
-# Configure locale
-RUN apt-get update && \
-    apt-get install -y locales && \
-    locale-gen en_SG en_SG.UTF-8 && \
-    update-locale LC_ALL=en_SG.UTF-8 LANG=en_SG.UTF-8
+# ----------------------------------------------------------
+# Locale
+# ----------------------------------------------------------
+RUN apt-get update && apt-get install -y locales && \
+    locale-gen en_SG.UTF-8 && update-locale LC_ALL=en_SG.UTF-8 LANG=en_SG.UTF-8
 
-# Base dependencies
-RUN apt-get update && \
-    apt-get install -y \
-    curl \
-    gnupg2 \
-    lsb-release \
-    python3-pip \
-    python3-argcomplete \
-    software-properties-common
+# ==========================================================
+# CORE SYSTEM + COMPILATION TOOLS
+# ==========================================================
+RUN apt-get update && apt-get install -y \
+    curl gnupg2 lsb-release git cmake build-essential pkg-config \
+    libomp-dev \
+    python3-pip python3-argcomplete \
+    python3-numpy python3-scipy python3-matplotlib \
+    software-properties-common && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Add ROS 2 repository
-RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
-    | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+# ==========================================================
+# ROS2 FOXY INSTALLATION
+# ==========================================================
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+      -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+          http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+      | tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
-# Install ROS 2 Foxy and colcon
-RUN apt-get update && \
-    apt-get install -y \
+RUN apt-get update && apt-get install -y \
     ros-foxy-desktop \
     python3-colcon-common-extensions \
     ros-foxy-gazebo-ros-pkgs \
     ros-foxy-joint-state-publisher \
     ros-foxy-vision-msgs && \
-    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Python packages globally
-COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Utilities (killall, etc.)
-RUN apt-get update && \
-    apt-get install -y psmisc && \
-    rm -rf /var/lib/apt/lists/*
-
-# Ros environment
-RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
-    echo "source /usr/share/gazebo/setup.sh" >> ~/.bashrc && \
-    echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> ~/.bashrc && \
-    echo "export _colcon_cd_root=~/ros2_install" >> ~/.bashrc
-
-WORKDIR /ros2_ws
-
-# Extra dependencies
-RUN apt-get update && \
-    apt-get install -y \
-    bluez \
-    bluez-tools \
-    python3-evdev \
-    python3-pyudev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Handy aliases
-RUN echo 'alias dei_sim="clear && colcon build && source install/setup.bash && ros2 launch launches dei_launch.py"' >> ~/.bashrc && \
-    echo 'alias build_and_source="clear && colcon build && source install/setup.bash"' >> ~/.bashrc && \
-    echo 'alias keyboard="clear && source install/setup.bash && ros2 run autocar_nav keyboard_control.py"' >> ~/.bashrc
-
-# ------------------------
-# CASADI + ACADOS
-# ------------------------
-WORKDIR /
-
+# ==========================================================
+# OPENCV + UTILITY PACKAGES
+# ==========================================================
 RUN apt-get update && apt-get install -y \
-    git cmake build-essential pkg-config && \
+    python3-opencv libopencv-dev libgl1 libglib2.0-0 \
+    psmisc bluez bluez-tools python3-evdev python3-pyudev && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Python packages
-RUN pip3 install casadi numpy networkx pyclothoids
-
-# Clone and build acados
-RUN git clone https://github.com/acados/acados.git /opt/acados && \
-    cd /opt/acados && \
-    git submodule update --init --recursive && \
-    mkdir -p build && cd build && \
-    cmake -DACADOS_WITH_QPOASES=ON .. && \
+# ==========================================================
+# ACADOS (HEAVY BUILD) — BUILT ONCE
+# ==========================================================
+WORKDIR /opt
+RUN git clone --recursive https://github.com/acados/acados.git && \
+    cd acados && mkdir build && cd build && \
+    cmake -DACADOS_WITH_QPOASES=ON \
+          -DACADOS_WITH_HPMPC=OFF \
+          -DACADOS_WITH_OSQP=ON \
+          -DACADOS_WITH_OPENMP=ON .. && \
     make install -j$(nproc)
 
-# Install Rust + build t_renderer locally (I did it to avoid GLIBC issues)
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
-    /root/.cargo/bin/cargo install --git https://github.com/acados/tera_renderer.git --root /opt/acados
+# Python interface
+RUN pip3 install -e /opt/acados/interfaces/acados_template
 
-# Environment variables
 ENV ACADOS_SOURCE_DIR=/opt/acados
 ENV PATH=/opt/acados/bin:$PATH
 ENV LD_LIBRARY_PATH=/opt/acados/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
-# Python interface
-RUN pip3 install -e ${ACADOS_SOURCE_DIR}/interfaces/acados_template
+# ==========================================================
+# RUST + tera_renderer (for acados)
+# ==========================================================
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+    /root/.cargo/bin/cargo install --git https://github.com/acados/tera_renderer.git --root /opt/acados
 
-# Go back to workspace
+# ==========================================================
+# ROS2 WORKSPACE
+# ==========================================================
 WORKDIR /ros2_ws
+RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
+    echo "export ACADOS_SOURCE_DIR=/opt/acados" >> ~/.bashrc && \
+    echo "export LD_LIBRARY_PATH=/opt/acados/lib:/usr/local/lib:\$LD_LIBRARY_PATH" >> ~/.bashrc && \
+    echo 'alias b="colcon build && source install/setup.bash"' >> ~/.bashrc && \
+    echo 'alias s="source install/setup.bash"' >> ~/.bashrc
+
+# ==========================================================
+# PYTHON REQUIREMENTS (LIGHTWEIGHT, EASY TO UPDATE)
+# ==========================================================
+# --- Base project requirements ---
+COPY docker/requirements.txt /tmp/requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements.txt
+
+# --- Optional / research requirements ---
+# You can append new .txt files here without triggering acados rebuild.
+# Example:
+# COPY docker/requirements_extra.txt /tmp/requirements_extra.txt
+# RUN pip install --no-cache-dir -r /tmp/requirements_extra.txt
+
+# --- Direct install for fast iteration ---
+RUN pip install --no-cache-dir filterpy networkx pyclothoids casadi
 
 # Handy aliases
-RUN echo 'alias b="clear && cd /ros2_ws && colcon build && source install/setup.bash"' >> ~/.bashrc && \
-    echo 'alias s="source /ros2_ws/install/setup.bash"' >> ~/.bashrc && \
-    echo 'alias sim="clear && source /ros2_ws/install/setup.bash && ros2 launch simulator gazebo.launch.py"' >> ~/.bashrc && \
+RUN echo 'alias sim="clear && source /ros2_ws/install/setup.bash && ros2 launch simulator gazebo.launch.py"' >> ~/.bashrc && \
     echo 'alias mpc="clear && source /ros2_ws/install/setup.bash && ros2 launch simulator mpc.launch.py"' >> ~/.bashrc
 
 CMD ["bash"]
