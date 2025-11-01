@@ -143,7 +143,7 @@ class MPC_DynamicBicycle:
         ny_e = 3
 
         ocp.solver_options.N_horizon = self.N_horizon
-        Q_mat = np.diag([1e2,5*1e1,1e0])  
+        Q_mat = np.diag([1e2,5*1e1,1e-1])  
         R_mat =  np.diag([1e-1,1e-1])
 
         #path const
@@ -162,14 +162,14 @@ class MPC_DynamicBicycle:
     
         ocp.parameter_values  = np.array([self.s_ref[0]])
         # set constraints on the input                                                                                                             
-        ocp.constraints.lbu = np.array([-1, -np.deg2rad(28)])
-        ocp.constraints.ubu = np.array([1, np.deg2rad(28)])
+        ocp.constraints.lbu = np.array([-1, -np.deg2rad(30)])
+        ocp.constraints.ubu = np.array([1, np.deg2rad(30)])
         ocp.constraints.idxbu = np.array([0, 1])
         ocp.constraints.x0 = self.X0
 
         # constraints on the states
-        ocp.constraints.lbx = np.array([ -np.deg2rad(45), -0.5])
-        ocp.constraints.ubx = np.array([ np.deg2rad(45), 0.5])
+        ocp.constraints.lbx = np.array([ -np.deg2rad(45), -0.4])
+        ocp.constraints.ubx = np.array([ np.deg2rad(45), 0.4])
         ocp.constraints.idxbx = np.array([0,1])
 
         # set options

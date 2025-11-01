@@ -131,7 +131,17 @@ class MPC_KinematicBicycle:
         ocp.solver_options.tf = self.Tf
         return ocp
 
-
+    def ClosestPoint(self, state):
+        x, y, yaw, _ = state
+        dist_sq = (self.trajectory[2,:] - x)**2 + (self.trajectory[3,:] - y)**2
+        idxmin = np.argmin(dist_sq)
+        min_dist = np.sqrt(dist_sq[idxmin])
+        _, _, x0,y0, psi0, v0 = self.trajectory[:,idxmin]
+        epsi=psi0 - psi
+        ey=np.cos(psi0)*(y-y0)-np.sin(psi0)*(x-x0)
+        full_state = np.hstack((epsi,ey,state))
+        
+        return self.s_ref[idxmin], full_state, idxmin, min_dist
 
     def set_initial_state(self, x0):
         """Set x0 constraint at stage 0."""
