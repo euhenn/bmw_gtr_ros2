@@ -7,7 +7,9 @@
 
 ```bash
 cd bmw_gtr_ros2
-docker compose up -d
+#docker compose up -d
+docker compose -f docker-compose.pc.yml up -d
+
 ```
 
 ### 2. Access the Container

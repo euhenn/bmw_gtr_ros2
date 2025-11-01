@@ -1,0 +1,28 @@
+services:
+  ros2-car:
+    image: ros2-foxy-car:latest
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile.pc
+    container_name: ros2-foxy-car
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ACADOS_SOURCE_DIR=/opt/acados
+      - LD_LIBRARY_PATH=/opt/acados/lib:/usr/local/lib:$LD_LIBRARY_PATH
+      - GAZEBO_MODEL_PATH=/usr/share/gazebo-11/models:/ros2_ws/install/bmw_gtr/share/bmw_gtr/models
+
+
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      #- ./bmw_gtr:/ros2_ws/src/bmw_gtr
+      - ./src:/ros2_ws/src    
+      - /run/udev:/run/udev:ro
+      
+    devices:
+      - /dev/input:/dev/input
+      
+    privileged: true  
+    stdin_open: true
+    tty: true
+    network_mode: "host"
