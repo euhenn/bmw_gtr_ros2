@@ -50,7 +50,7 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # ==========================================================
-# ACADOS (HEAVY BUILD) — BUILT ONCE
+# ACADOS — BUILT ONCE
 # ==========================================================
 WORKDIR /opt
 RUN git clone --recursive https://github.com/acados/acados.git && \
@@ -85,7 +85,7 @@ RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
     echo 'alias s="source install/setup.bash"' >> ~/.bashrc
 
 # ==========================================================
-# PYTHON REQUIREMENTS (LIGHTWEIGHT, EASY TO UPDATE)
+# EXTRA REQUIREMENTS
 # ==========================================================
 # --- Base project requirements ---
 COPY docker/requirements.txt /tmp/requirements.txt
@@ -103,6 +103,7 @@ RUN pip install --no-cache-dir filterpy networkx pyclothoids casadi
 
 # Handy aliases
 RUN echo 'alias sim="clear && source /ros2_ws/install/setup.bash && ros2 launch simulator gazebo.launch.py"' >> ~/.bashrc && \
-    echo 'alias mpc="clear && source /ros2_ws/install/setup.bash && ros2 launch simulator mpc.launch.py"' >> ~/.bashrc
+    echo 'alias mpc="clear && source /ros2_ws/install/setup.bash && ros2 launch simulator mpc.launch.py"' >> ~/.bashrc && \
+    echo 'alias spawn="clear && source /ros2_ws/install/setup.bash && ros2 launch simulator spawn_car.launch.py"' >> ~/.bashrc
 
 CMD ["bash"]
