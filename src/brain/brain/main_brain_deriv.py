@@ -55,7 +55,7 @@ class CarControllerNode(Node):
         self.car.drive_speed(0.0)
 
         # --- Initialize MPC ---
-        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=100)
+        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=150)
 
         # --- Initialize control variables ---
         self.get_logger().info(f"Control loop target rate: {TARGET_FPS} Hz")
@@ -127,7 +127,7 @@ class CarControllerNode(Node):
                 e_psi, e_y = state_ocp[0], state_ocp[1]
 
                 # === 4. Solve MPC ===
-                a_cmd, ddelta_cmd = self.mpc.solve(state_ocp, idx + 1,
+                a_cmd, ddelta_cmd = self.mpc.solve(state_ocp, idx + 10,
                                                   warm_start=None)#np.array([a_prev, delta_prev]))
 
                 # === 5. Integrate control & apply ===
