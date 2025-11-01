@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import rclpy
 from rclpy.node import Node
-from automobile_data_simulator_ukf import AutomobileDataSimulator
+from automobile_data_simulator import AutomobileDataSimulator
 from time import sleep, time
 import sys, termios, tty, select
 import cv2
@@ -58,8 +58,8 @@ class AutomobileDataDisplay(AutomobileDataSimulator):
         print("\033c", end="")  # Clear screen
         print("=== 🚗 Automobile Data Display ===\n")
         print(f"Encoder Distance: {self.encoder_distance:.3f} m")
-        print(f"Sensors:          x_gps={self.x_gps:.3f}, y_gps={self.y_gps:.3f}, yaw_imu={self.yaw_true:.2f} rad")
-        print(f"UKF filter:       x_est={self.x_est:.3f}, y_est={self.y_est:.3f}, yaw_est={self.yaw_est:.2f} rad")
+#       print(f"Sensors:          x_gps={self.x_gps:.3f}, y_gps={self.y_gps:.3f}, yaw_imu={self.yaw_true:.2f} rad")
+        print(f"localisation:      x_est={self.x_est:.3f}, y_est={self.y_est:.3f}") #, yaw_est={self.yaw_est:.2f} rad")
         print(f"Steering Angle:   {self.curr_steer:.3f} deg")
         print(f"Speed:            {self.speed:.3f} m/s")
         print(f"Sim time IMU:     {self.timestamp:.3f} s")
