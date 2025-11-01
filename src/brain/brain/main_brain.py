@@ -15,7 +15,7 @@ from mpc_controller import MPC_KinematicBicycle
 # -------------------------------
 # Control loop parameters
 # -------------------------------
-TARGET_FPS = 15.0         # target loop frequency [Hz]
+TARGET_FPS = 50.0         # target loop frequency [Hz]
 DT = 1.0 / TARGET_FPS     # fixed timestep for velocity integration [s]
 
 
@@ -55,7 +55,7 @@ class CarControllerNode(Node):
         self.car.drive_speed(0.0)
 
         # --- Initialize MPC ---
-        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=30)
+        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=100)
 
         # --- Initialize control variables ---
         self.get_logger().info(f"Control loop target rate: {TARGET_FPS} Hz")
@@ -75,11 +75,13 @@ class CarControllerNode(Node):
     # ---------------------------------------------------------------
     def get_current_state(self):
         """Return [x, y, yaw, v]."""
-        x = float(self.car.x_est)
-        y = float(self.car.y_est)
-        yaw = float(self.car.yaw_true)
-        v = float(self.car.filtered_encoder_velocity)
-        return np.array([x, y, yaw, v])
+
+        x_gps = float(self.car.x_est)
+        y_gps = float(self.car.y_est)
+        yaw_imu = float(self.car.yaw_true)
+        v_enc = float(self.car.filtered_encoder_velocity)
+
+        return np.array([ x_gps, y_gps, yaw_imu, v_enc])
 
     def apply_control(self, v, delta):
         """Send control commands to simulator."""
@@ -103,7 +105,7 @@ class CarControllerNode(Node):
                 # === 1. Get current state ===
                 x, y, yaw, v = self.get_current_state()
 
-                if (True):
+                if (False):
                     # === 2. Predict future state to compensate for delay ===
                     # Simple kinematic bicycle forward propagation for delay_sec seconds
                     L = self.mpc.L
@@ -125,12 +127,12 @@ class CarControllerNode(Node):
                 e_psi, e_y = state_ocp[0], state_ocp[1]
 
                 # === 4. Solve MPC ===
-                a_cmd, delta_cmd = self.mpc.solve(state_ocp, idx + 10,
+                a_cmd, delta_cmd = self.mpc.solve(state_ocp, idx,
                                                   warm_start=None)#np.array([a_prev, delta_prev]))
 
                 # === 5. Integrate control & apply ===
 
-                v_cmd = max(0, v + (a_cmd * loop_duration))
+                v_cmd = max(0.01, v + (a_cmd * loop_duration))
                 self.apply_control(v_cmd, delta_cmd)
 
                 a_prev, delta_prev = a_cmd, delta_cmd
@@ -156,9 +158,9 @@ class CarControllerNode(Node):
             target_period = 1.0 / TARGET_FPS # 0.066666 secods
             if loop_duration < target_period: 
                 time.sleep(target_period - loop_duration)
-                self.get_logger().warn(
-                    f"        Loop: took {loop_duration:.3f}s"
-                )
+                #self.get_logger().warn(
+                #    f"        Loop: took {loop_duration:.3f}s"
+                #)
             else:
                self.get_logger().warn(
                    f"Loop overrun: took {loop_duration:.3f}s > {target_period:.3f}s"

@@ -4,7 +4,7 @@ from rclpy.node import Node
 from std_msgs.msg import String, Float32
 from msgs.msg import IMU, Localisation
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
+#from cv_bridge import CvBridge
 import json
 import collections
 import numpy as np

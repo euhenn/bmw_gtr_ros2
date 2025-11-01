@@ -20,7 +20,7 @@ MAX_ACCEL, MAX_STEER = 5.5, 28.0      # [m/s²], [deg]
 # Vehicle geometry
 LENGTH, WIDTH = 0.45, 0.18
 BACKTOWHEEL, WHEEL_LEN, WHEEL_WIDTH = 0.10, 0.03, 0.03
-WB = 0.26
+WB = 0.04 #0.26
 
 # Camera parameters
 FRAME_WIDTH, FRAME_HEIGHT = 320, 240
@@ -63,7 +63,6 @@ class Automobile_Data:
 
         # --- Estimation ---
         self.x_est = self.y_est = 0.0
-        self.x_gps = self.y_gps = 0.0
         self.yaw_est = self.yaw_offset
         self.gps_cnt = 0
         self.trust_gps = True
