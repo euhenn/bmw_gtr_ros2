@@ -18,7 +18,6 @@ Outputs:
 import numpy as np
 import cv2 as cv
 from path_planning_eugen import PathPlanning
-from scipy.special import comb
 from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 

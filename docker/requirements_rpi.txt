@@ -1,4 +1,5 @@
-pandas >= 1.2.3
+#pandas >= 1.2.3
+pandas==1.1.5
 xacro >= 1.13.3
 numpy >= 1.17.4
 catkin-pkg >= 0.4.23
