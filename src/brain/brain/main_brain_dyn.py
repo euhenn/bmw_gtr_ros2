@@ -34,7 +34,7 @@ class CarControllerNode(Node):
         self.log_writer = csv.writer(self.log_file)
         self.log_writer.writerow([
             "t", "idx",
-            "x", "y", "yaw", "vx", "vy", ,"omega", "delta_actual",
+            "x", "y", "yaw", "vx", "vy","omega", "delta_actual",
             "e_psi", "e_y",
             "a_cmd", "delta_cmd",
             "v_cmd"
@@ -57,10 +57,12 @@ class CarControllerNode(Node):
         self.car.drive_speed(0.0)
 
         # --- Initialize MPC ---
-        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=100)
+        self.mpc = MPC_DynamicBicycle(ds=0.01, N_horizon=100)
 
         # --- Initialize control variables ---
         self.get_logger().info(f"Control loop target rate: {TARGET_FPS} Hz")
+
+        first_cycle = True
 
     # ---------------------------------------------------------------
     # SIMULATION THREAD
@@ -83,8 +85,8 @@ class CarControllerNode(Node):
         yaw_imu = float(self.car.yaw_true)
         vx = float(self.car.filtered_encoder_velocity)
 
-        omega = (yaw - self.prev_yaw) / DT
-        self.prev_yaw = yaw
+        omega = (yaw_imu - self.prev_yaw) / DT
+        self.prev_yaw = yaw_imu
 
         # Estimate lateral velocity (vy)
         delta = np.deg2rad(self.car.curr_steer)
@@ -108,10 +110,15 @@ class CarControllerNode(Node):
         delay_sec = 0.17   # measured actuation delay
         loop_duration = 0
 
-        
 
         while rclpy.ok():
             loop_start = time.time()
+
+            if(first_cycle):
+                first_cycle = False
+                self.prev_yaw = float(self.car.yaw_true)
+                continue
+
 
             try:
                 # === 1. Get current state ===

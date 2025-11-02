@@ -68,15 +68,15 @@ class MPC_DynamicBicycle:
 
         # slip angles (approx)
         beta = arctan(self.lr * tan(delta) / self.L)
-        beta_f = -atan((vy + self.lf * omega) / (vx + eps)) + delta
-        beta_r = atan((vy - self.lr * omega) / (vx + eps))
+        beta_f = -arctan((vy + self.lf * omega) / (vx + eps)) + delta
+        beta_r = arctan((vy - self.lr * omega) / (vx + eps))
 
          # longitudinal drag (simple quadratic)
         Fx_d = 0.5 * self.ro * self.Cz * self.Az * vx * fabs(vx)
 
         # simplified lateral (Pacejka-like) forces (scaled)
-        Fc_f = - self.mi * self.Dcf * sin(self.Ccf * atan((1.0 / self.mi) * self.Bcf * beta_f))
-        Fc_r = - self.mi * self.Dcr * sin(self.Ccr * atan((1.0 / self.mi) * self.Bcr * beta_r))
+        Fc_f = - self.mi * self.Dcf * sin(self.Ccf * arctan((1.0 / self.mi) * self.Bcf * beta_f))
+        Fc_r = - self.mi * self.Dcr * sin(self.Ccr * arctan((1.0 / self.mi) * self.Bcr * beta_r))
 
         # lateral components considering steering (approx)
         Fyf = Fc_f * cos(delta)  # small-angle approx; cos(delta) ~ 1 for small delta
