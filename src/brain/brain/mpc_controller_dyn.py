@@ -50,7 +50,8 @@ class MPC_DynamicBicycle:
         self.traj_gen = TrajectoryGeneration(self.ds, self.N_horizon,use_curvature_velocity=False, v_max=0.5, v_min=0.4, smooth_velocity=True)
         self.traj, self.s_ref, kappa_ref = self.traj_gen.generating_spatial_reference(nodes)
         self.kappa = interpolant("kappa", "bspline", [self.s_ref], kappa_ref)
-        self.x0 = self.traj[:, 0]
+        omega = np.gradient(self.traj[:, 4], self.ds)
+        self.x0 = np.concatenate((self.traj[:, 0], [0.0, omega[0]]))
 
     # ----------------------------------------------------------
     # Model
