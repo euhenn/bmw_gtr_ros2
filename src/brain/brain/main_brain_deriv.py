@@ -55,7 +55,7 @@ class CarControllerNode(Node):
         self.car.drive_speed(0.0)
 
         # --- Initialize MPC ---
-        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=150)
+        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=50)
 
         # --- Initialize control variables ---
         self.get_logger().info(f"Control loop target rate: {TARGET_FPS} Hz")
@@ -104,7 +104,7 @@ class CarControllerNode(Node):
                 # === 1. Get current state ===
                 x, y, yaw, v, delta = self.get_current_state()
 
-                if (True):
+                if (False):
                     # === 2. Predict future state to compensate for delay ===
                     # Simple kinematic bicycle forward propagation for delay_sec seconds
                     L = self.mpc.L

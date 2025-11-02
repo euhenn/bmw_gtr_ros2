@@ -49,6 +49,7 @@ class CarControllerNode(Node):
         )
         
         self.prev_yaw = float(self.car.yaw_true)
+        self.first_cycle = True
 
         # --- Background simulator thread ---
         self._sim_running = True
@@ -62,7 +63,6 @@ class CarControllerNode(Node):
         # --- Initialize control variables ---
         self.get_logger().info(f"Control loop target rate: {TARGET_FPS} Hz")
 
-        first_cycle = True
 
     # ---------------------------------------------------------------
     # SIMULATION THREAD
@@ -114,9 +114,9 @@ class CarControllerNode(Node):
         while rclpy.ok():
             loop_start = time.time()
 
-            if(first_cycle):
-                first_cycle = False
-                self.prev_yaw = float(self.car.yaw_true)
+            if(self.first_cycle):
+                self.first_cycle = False
+                _=self.get_current_state()
                 continue
 
 
@@ -151,7 +151,7 @@ class CarControllerNode(Node):
 
                 # === 5. Integrate control & apply ===
 
-                v_cmd = max(0.01, v + (a_cmd * loop_duration))
+                v_cmd = max(0.01, vx + (a_cmd * loop_duration))
                 self.apply_control(v_cmd, delta_cmd)
 
                 a_prev, delta_prev = a_cmd, delta_cmd
