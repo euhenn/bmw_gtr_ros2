@@ -94,7 +94,7 @@ class CarControllerNode(Node):
     def run(self):
         self.get_logger().info("Starting main control loop...")
         a_prev, ddelta_prev = 0.0, 0.0
-        delay_sec = 0.17   # measured actuation delay
+        delay_sec = 0.27   # measured actuation delay
         loop_duration = 0
 
         while rclpy.ok():
@@ -104,7 +104,7 @@ class CarControllerNode(Node):
                 # === 1. Get current state ===
                 x, y, yaw, v, delta = self.get_current_state()
 
-                if (False):
+                if (True):
                     # === 2. Predict future state to compensate for delay ===
                     # Simple kinematic bicycle forward propagation for delay_sec seconds
                     L = self.mpc.L
