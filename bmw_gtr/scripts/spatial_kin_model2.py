@@ -24,7 +24,7 @@ Tf = N_horizon * ds_ocp
 
 track = TrajectoryGeneration(ds_ocp, N_horizon)
 nodes_to_visit = [390,307, 377]#[230,307, 418]
-nodes_to_visit = [91,125,141,91,125,141]
+nodes_to_visit = [150,91,125,141]
 y_ref, s_ref, kappa_ref = track.generating_spatial_reference(nodes_to_visit)
 kappa = interpolant("kappa", "bspline", [s_ref], kappa_ref)
 X0 = y_ref[0,:]
@@ -192,7 +192,6 @@ def ClosedLoopSimulationSpatial():
     for i in range(Nsim): 
         # Reference for horizon
         if (s_sim- s_prev >= ds_ocp) or (s_sim >= s_ref[k+1]): # 
-            y_ref[k:k+N_horizon, :] = track.generating_online_spatial_ref(s_sim)
             for j in range(N_horizon):
                 acados_ocp_solver.set(j, "yref", np.concatenate((y_ref[j+k,:2],[0.0, 0.0])))
                 acados_ocp_solver.set(j, "p", np.array([s_ref[k + j]]))

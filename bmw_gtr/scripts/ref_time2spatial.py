@@ -9,6 +9,9 @@ in this case the part of the reference that is picked is NOT CORRECT
 import numpy as np
 
 def time2spatial(x,y,psi, sref,y_ref):
+    #xref = y_ref[:, 0] 
+    #yref = y_ref[:, 1]
+    #psiref = y_ref[:, 2]
     xref = y_ref[:, 0] 
     yref = y_ref[:, 1]
     psiref = y_ref[:, 2]

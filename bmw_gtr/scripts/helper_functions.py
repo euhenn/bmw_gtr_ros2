@@ -20,6 +20,15 @@ def mL2pix(ml):
     # meters to pixel (left frame)
     return np.int32(ml*const_verysmall)
 
+def mR2pix(mr):
+    # meters to pixel (right frame), return directly a cv point
+    if mr.size == 2:
+        pix = mL2pix((mr - np.array([0, 15.0])) @ np.array([[1.0, 0.0], [0.0, -1.0]])) 
+        return (pix[0], pix[1])
+    else:
+        return mL2pix((mr - np.array([0, 15.0])) @ np.array([[1.0, 0.0], [0.0, -1.0]]))
+
+
 
 def pix2mL(pix):
     # pixel to meters (left frame)
