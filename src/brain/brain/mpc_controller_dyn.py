@@ -26,8 +26,8 @@ class MPC_DynamicBicycle:
         self.m = 1.415
         self.h = 0.03
         self.I_z = 0.17423
-        self.Bcf, self.Ccf, self.Dcf = 0.4, 1.3, 6.94 #0.23, 1.57, 6.94
-        self.Bcr, self.Ccr, self.Dcr = 0.4, 1.3, 6.94
+        self.Bcf, self.Ccf, self.Dcf = 0.425, 1.3, 6.246 
+        self.Bcr, self.Ccr, self.Dcr = 0.425, 1.3, 6.246
 
         self.g = 9.81
         self.mi = 0.9
@@ -76,8 +76,8 @@ class MPC_DynamicBicycle:
         Fx_d = 0.5 * self.ro * self.Cz * self.Az * vx * fabs(vx)
 
         # simplified lateral (Pacejka-like) forces (scaled)
-        Fc_f = - self.mi * self.Dcf * sin(self.Ccf * arctan((1.0 / self.mi) * self.Bcf * beta_f))
-        Fc_r = - self.mi * self.Dcr * sin(self.Ccr * arctan((1.0 / self.mi) * self.Bcr * beta_r))
+        Fc_f = - self.Dcf * sin(self.Ccf * arctan( self.Bcf * beta_f))
+        Fc_r = - self.Dcr * sin(self.Ccr * arctan( self.Bcr * beta_r))
 
         # lateral components considering steering (approx)
         Fyf = Fc_f * cos(delta)  # small-angle approx; cos(delta) ~ 1 for small delta
