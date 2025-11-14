@@ -124,6 +124,7 @@ class TrajectoryGeneration:
 
         e_theta = np.zeros_like(s_ref)
         e_y = np.zeros_like(s_ref)
+        #psi_ref = np.unwrap(psi_ref)
         trajectory = np.stack((e_theta, e_y, x_ref, y_ref, psi_ref, v_ref)).astype(np.float32)
 
         # Store internally
@@ -228,9 +229,10 @@ class TrajectoryGeneration:
 # -------------------------------------------------------------
 if __name__ == "__main__":
     nodes_to_visit = [73, 97, 100, 130, 140]
+    nodes_to_visit = [397, 307, 377] # round about 1 then 2nd exit
 
-    traj_gen = TrajectoryGeneration(ds=0.1, N_horizon=50, v_max=0.5, v_min=0.3, 
-                                  use_curvature_velocity=False, smooth_velocity=True)
+    traj_gen = TrajectoryGeneration(ds=0.1, N_horizon=100, v_max=0.35, v_min=0.3, 
+                                  use_curvature_velocity=False, smooth_velocity=False)
 
     trajectory, s_ref, kappa_ref = traj_gen.generating_spatial_reference(nodes_to_visit)
     traj_horizon = traj_gen.generating_online_spatial_ref(s_curr=0.5)

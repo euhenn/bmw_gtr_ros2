@@ -55,7 +55,7 @@ class CarControllerNode(Node):
         self.car.drive_speed(0.0)
 
         # --- Initialize MPC ---
-        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=100)
+        self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=40)
 
         # --- Initialize control variables ---
         self.get_logger().info(f"Control loop target rate: {TARGET_FPS} Hz")
@@ -95,7 +95,7 @@ class CarControllerNode(Node):
     def run(self):
         self.get_logger().info("Starting main control loop...")
         a_prev, delta_prev = 0.0, 0.0
-        delay_sec = 0.25   # measured actuation delay
+        delay_sec = 0.3   # measured actuation delay
         loop_duration = 0
 
         while rclpy.ok():
@@ -105,7 +105,7 @@ class CarControllerNode(Node):
                 # === 1. Get current state ===
                 x, y, yaw, v = self.get_current_state()
 
-                if (True):
+                if (False):
                     # === 2. Predict future state to compensate for delay ===
                     # Simple kinematic bicycle forward propagation for delay_sec seconds
                     L = self.mpc.L
@@ -118,7 +118,7 @@ class CarControllerNode(Node):
                         v_pred = 0.0
                     elif v < 0.05 and a_prev > 0.0:
                         v_pred = max(v_pred, 0.05)
-                    state_ocp, idx = self.mpc.get_state(x_pred, y_pred, yaw_pred, v_pred)
+                    state_ocp, idx = self.mpc.get_state(x_pred, y_pred, yaw_pred, v)
                 else:
                     # === 2. Transform to spatial coordinates ===#
                     state_ocp, idx = self.mpc.get_state(x, y, yaw, v)
@@ -127,11 +127,9 @@ class CarControllerNode(Node):
                 e_psi, e_y = state_ocp[0], state_ocp[1]
 
                 # === 4. Solve MPC ===
-                a_cmd, delta_cmd = self.mpc.solve(state_ocp, idx+1,
-                                                  warm_start=None)#np.array([a_prev, delta_prev]))
+                a_cmd, delta_cmd = self.mpc.solve(state_ocp, idx, warm_start=None)#np.array([a_prev, delta_prev]))
 
                 # === 5. Integrate control & apply ===
-
                 v_cmd = max(0.01, v + (a_cmd * loop_duration))
                 self.apply_control(v_cmd, delta_cmd)
 

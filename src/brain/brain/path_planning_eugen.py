@@ -42,14 +42,11 @@ class PathPlanning:
 
         # Load intersection sets
         self.intersection_cen = list(np.loadtxt(os.path.join(base_dir, 'data', 'int_mid.txt'), dtype=str))
+        self.roundabout = list(np.loadtxt(os.path.join(base_dir, 'data', 'round_in.txt'), dtype=str))
         self.intersection_in = list(np.loadtxt(os.path.join(base_dir, 'data', 'int_in.txt'), dtype=str))
         self.intersection_out = list(np.loadtxt(os.path.join(base_dir, 'data', 'int_out.txt'), dtype=str))
         self.stoplines = list(np.loadtxt(os.path.join(base_dir, 'data', 'stop_lines.txt'), dtype=str))
-        self.forbidden_nodes = self.intersection_cen + self.intersection_in + self.intersection_out
 
-        # Valid start nodes
-        self.all_start_nodes = [n for n in self.G.nodes if n not in self.forbidden_nodes]
-        self.all_nodes_coords = np.array([self.get_coord(node) for node in self.all_start_nodes])
 
     # -------------------------------------------------------------
     # ROUTE GRAPH LOGIC
@@ -104,6 +101,7 @@ class PathPlanning:
 
             next_is_inter = next_node in self.intersection_cen
             prev_is_inter = prev_node in self.intersection_cen
+            next_is_roundabout = curr_node in self.roundabout
 
             if next_is_inter:
                 # approaching an intersection: place an EXIT offset after current node towards the intersection
@@ -112,7 +110,7 @@ class PathPlanning:
                 if mode == "original":
                     # add center + offset (keep original behavior)
                     self.route_list.append((xc, yc, heading_in))
-                    self.route_list.append((xc + offset_dist * dx_in, yc + offset_dist * dy_in, heading_in))
+                    #self.route_list.append((xc + offset_dist * dx_in, yc + offset_dist * dy_in, heading_in))
                     last_heading = heading_in
                 else:
                     # skip center — keep only the offset
@@ -131,7 +129,7 @@ class PathPlanning:
 
                 if mode == "original":
                     # add entry offset (toward center) + the center itself
-                    self.route_list.append((xc - offset_dist * dx_out, yc - offset_dist * dy_out, heading_out))
+                    #self.route_list.append((xc - offset_dist * dx_out, yc - offset_dist * dy_out, heading_out))
                     self.route_list.append((xc, yc, heading_out))
                     last_heading = heading_out
                 else:
@@ -139,7 +137,8 @@ class PathPlanning:
                     # IMPORTANT FIX: use OUTGOING heading so it connects well to the next segment
                     self.route_list.append((xc - offset_dist * dx_out, yc - offset_dist * dy_out, heading_out))
                     last_heading = heading_out
-
+            elif next_is_roundabout:
+                print(f"[INFO] Approaching roundabout at node {curr_node}")
             else:
                 # normal segment (no intersection adjacent)
                 dx, dy = xn - xp, yn - yp
@@ -564,6 +563,7 @@ if __name__ == "__main__":
     planner = PathPlanning(map_img)
     nodes_to_pass = [73, 97, 125, 150, 135]
     #nodes_to_pass = [330, 337]
+    #nodes_to_pass = [397, 307, 377]
 
     # Generate path (now auto-stored inside planner)
     planner.generate_path_passing_through(nodes_to_pass, step_length=0.01)

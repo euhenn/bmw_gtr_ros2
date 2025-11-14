@@ -1,16 +1,3 @@
-"""
-| Parameter                | Meaning                               | Effect of ↑ increase                               | Effect of ↓ decrease                              |
-| ------------------------ | ------------------------------------- | -------------------------------------------------- | ------------------------------------------------- |
-| `Q[0,0]` (heading error) | Penalizes yaw misalignment            | Vehicle turns more aggressively to correct heading | Slower heading corrections, smoother              |
-| `Q[1,1]` (lateral error) | Penalizes offset from path center     | Hug path tightly, but risk oscillations            | Allows small drift but smoother path              |
-| `Q[2,2]` (speed error)   | Penalizes deviation from target speed | Accelerates/decelerates strongly                   | Sluggish speed tracking                           |
-| `R[0,0]` (accel)         | Penalizes strong acceleration         | Smoother throttle, slower to reach v_ref           | Reacts faster but more jerky                      |
-| `R[1,1]` (steering)      | Penalizes steering magnitude          | Smoother steering, larger steady-state errors      | Aggressive steering, possibly oscillatory         |
-| `W_e`                    | Penalizes final error at horizon      | Forces long-term convergence                       | More freedom short-term, less stability long-term |
-
-"""
-
-
 #!/usr/bin/env python3
 from acados_template import AcadosOcp, AcadosOcpSolver, AcadosModel
 import numpy as np
@@ -18,9 +5,12 @@ import scipy.linalg
 from casadi import SX, vertcat, cos, sin, tan, arctan, interpolant
 from reference_generation_velocity import TrajectoryGeneration
 
+NODES = [73, 97, 125, 150,135] # random area
+NODES = [397, 200]      # round about 3rd exit - going highway
+NODES = [397, 307, 377] # round about 1 then 2nd exit
 
 class MPC_KinematicBicycle:
-    def __init__(self, ds=0.05, N_horizon=50, nodes=[73, 97, 125, 150,135]):
+    def __init__(self, ds=0.01, N_horizon=100, nodes=NODES):
         self.lf, self.lr = 0.1335, 0.1335
         self.L = self.lf + self.lr
         self.ds, self.N_horizon = ds, N_horizon
@@ -33,7 +23,7 @@ class MPC_KinematicBicycle:
     # Reference trajectory
     # ----------------------------------------------------------
     def _load_reference(self, nodes):
-        self.traj_gen = TrajectoryGeneration(self.ds, self.N_horizon,use_curvature_velocity=False, v_max=0.5, v_min=0.4, smooth_velocity=True)
+        self.traj_gen = TrajectoryGeneration(self.ds, self.N_horizon,use_curvature_velocity=False, v_max=0.4, v_min=0.2, smooth_velocity=True)
         self.traj, self.s_ref, kappa_ref = self.traj_gen.generating_spatial_reference(nodes)
         self.kappa = interpolant("kappa", "bspline", [self.s_ref], kappa_ref)
         self.x0 = self.traj[:, 0]
@@ -100,20 +90,28 @@ class MPC_KinematicBicycle:
         R = np.diag([2e-2, 1e2])    
 
         # r speed at e-5 goes crazy, crazy good
-        Q = np.diag([5e3, 1e2, 5e-1])   
+        Q = np.diag([5e3, 1e2, 5e0])   
         R = np.diag([5e-6, 1e-2])    
 
-        Q = np.diag([5e3, 1e2, 1e2])   
-        R = np.diag([5e-10, 1e2])  
-        ocp.cost.W_e = np.diag([5e3, 1e2]) * self.ds
-        
-        # Terminal cost (scaled by ds so it compares to one spatial step�s cost)
-        #ocp.cost.W_e = np.diag([5e3, 1e2]) * self.ds
+        # Roundabout that works well for 3rd exit
+        Q = np.diag([5e1, 1e2, 1e0])   
+        R = np.diag([5e-3, 1e-1])  
+        ocp.cost.W_e = np.diag([5e-5, 1e2]) * self.ds
+        ocp.cost.W = scipy.linalg.block_diag(Q, R)
 
-        #ocp.cost.W_e = np.diag([5e3, 1e2]) * self.ds # normalizing the terminal cost so its contribution stays roughly proportional to one spatial step’s cost
+        # roundabout crazy good with -2 index or -1  
+        Q = np.diag([1e3, 2e2, 1e0])   
+        R = np.diag([5e-3, 5e-2])  
+        ocp.cost.W_e = np.diag([1e3, 2e2]) * self.ds
+        ocp.cost.W = scipy.linalg.block_diag(Q, R)
+
+        # Tests 
+        Q = np.diag([2e2, 5e2, 1e0])   
+        R = np.diag([7e-4, 5e-4])   
+        ocp.cost.W_e = np.diag([2e2, 5e2]) * self.ds
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
         
-        ocp.cost.cost_type = "NONLINEAR_LS"
+        ocp.cost.cost_type   = "NONLINEAR_LS"
         ocp.cost.cost_type_e = "NONLINEAR_LS"
 
         m = ocp.model
@@ -123,39 +121,19 @@ class MPC_KinematicBicycle:
             m.x[-1],
             m.u,
         )
+
         ocp.model.cost_y_expr_e = vertcat(m.x[0], m.x[1])
         ocp.cost.yref = np.zeros(3 + nu)
         ocp.cost.yref_e = np.zeros(2)
-        #TESTING 
-        #ocp.model.cost_y_expr   = vertcat(m.x[0], m.x[1], m.x[-1], m.u)   # [e_psi, e_y, v, a, delta]
-        #ocp.model.cost_y_expr_e = vertcat(m.x[0], m.x[1])                 # terminal [e_psi, e_y]
-        #ocp.cost.yref   = np.zeros(3 + 2)  # epsi->0, ey->0, v->v_ref, a->0, delta->0
-        #ocp.cost.yref_e = np.zeros(2)      # epsi->0, ey->0
 
     def _configure_constraints(self, ocp, nx, nu):
-        ocp.constraints.lbu = np.array([-20, -np.deg2rad(28)])
-        ocp.constraints.ubu = np.array([20, np.deg2rad(28)])
+        ocp.constraints.lbu = np.array([-2, -np.deg2rad(30)])
+        ocp.constraints.ubu = np.array([2, np.deg2rad(30)])
         ocp.constraints.idxbu = np.arange(nu)
 
-        ocp.constraints.lbx = np.array([-np.deg2rad(45), -0.35])
-        ocp.constraints.ubx = np.array([np.deg2rad(45), 0.35])
+        ocp.constraints.lbx = np.array([-np.deg2rad(40), -0.15])
+        ocp.constraints.ubx = np.array([np.deg2rad(40), 0.15])
         ocp.constraints.idxbx = np.array([0, 1])
-        
-        
-        # Inputs
-        #ocp.constraints.lbu   = np.array([-10.0, -np.deg2rad(28)])  # a [m/s^2], delta [rad]
-        #ocp.constraints.ubu   = np.array([ 10.0,  np.deg2rad(28)])
-        #ocp.constraints.idxbu = np.arange(nu)
-
-        # States: bound heading error & lateral error, and keep v >= 0.3 m/s
-        # state order: [e_psi, e_y, x, y, psi, v]
-        #idx_epsi, idx_ey, idx_v = 0, 1, 5
-        #ocp.constraints.idxbx = np.array([idx_epsi, idx_ey, idx_v])
-        #ocp.constraints.lbx   = np.array([-np.deg2rad(30), -0.20, -0.01])
-        #ocp.constraints.ubx   = np.array([ np.deg2rad(30),  0.20, 1.50])
-
-        
-        
 
         ocp.constraints.x0 = self.x0
         ocp.parameter_values = np.array([self.s_ref[0]])
@@ -172,21 +150,6 @@ class MPC_KinematicBicycle:
 
         # --- Stability & convergence tuning ---
         ocp.solver_options.globalization = "MERIT_BACKTRACKING"
-
-
-        # ocp.solver_options.qp_solver_iter_max = 50
-        # ocp.solver_options.nlp_solver_max_iter = 20
-        # ocp.solver_options.levenberg_marquardt = 1e-6
-
-        # --- Integration method accuracy ---
-        #ocp.solver_options.sim_method_num_stages = 4 #50 nodes × 3 steps × 4 stages = 600 evaluations per solve!
-        #ocp.solver_options.sim_method_num_steps = 3
-
-        # # --- Tolerances ---
-        # ocp.solver_options.qp_solver_tol_stat = 1e-2
-        # ocp.solver_options.qp_solver_tol_eq = 1e-2
-        # ocp.solver_options.qp_solver_tol_ineq = 1e-2
-        # ocp.solver_options.qp_solver_tol_comp = 1e-2
 
     # ----------------------------------------------------------
     # Reference and solving
@@ -232,6 +195,6 @@ class MPC_KinematicBicycle:
         Compute spatial state using the reference trajectory and current pose.
         """
         _, e_psi, e_y, idx = self.traj_gen.time2space(x, y, yaw)
-        state_ocp = np.array([e_psi, e_y, x, y, yaw, v])
+        state_ocp = np.array([e_psi, -e_y, x, y, yaw, v])
 
         return state_ocp, idx
