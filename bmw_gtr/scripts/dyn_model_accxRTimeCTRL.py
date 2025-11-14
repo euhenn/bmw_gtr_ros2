@@ -12,12 +12,14 @@ from vehicle_params import VehicleParams
 ds_ocp = 0.01
 dt_sim = 0.005
 dt_control = 0.02
-N_horizon = 50
+N_horizon = 50 #  here shorte
 Tf =N_horizon * ds_ocp
 
 nodes_to_visit =[141,97,125,150]
+nodes_to_visit = [397,307,377]
+#nodes_to_visit = [330,307]
 
-traj_gen = TrajectoryGeneration(ds=ds_ocp, N_horizon=50, v_max=0.6, v_min=0.3, 
+traj_gen = TrajectoryGeneration(ds=ds_ocp, N_horizon=50, v_max=0.5, v_min=0.3, 
                                   use_curvature_velocity=False, smooth_velocity=True)
 
 y_ref, s_ref, kappa_ref = traj_gen.generating_spatial_reference(nodes_to_visit)
@@ -192,7 +194,7 @@ def CreateOcpSolver_SpatialDyn() -> AcadosOcp:
     ny_e = 3
 
     ocp.solver_options.N_horizon = N_horizon
-    Q_mat = np.diag([5*1e1,1e2,1e1])  
+    Q_mat = np.diag([5*1e2,1e3,1e-1])  
     R_mat =  np.diag([1e-1,1e-1])
 
     #path const
@@ -203,7 +205,7 @@ def CreateOcpSolver_SpatialDyn() -> AcadosOcp:
   
     #terminal costs
     ocp.cost.cost_type_e = "NONLINEAR_LS"
-    Q_mat = np.diag([1e1,5*1e1])
+    Q_mat = np.diag([1e2,5*1e3])
     ocp.cost.W_e = Q_mat*ds_ocp
     yref_e = np.array([0.0, 0.0]) 
     ocp.cost.yref_e = yref_e
@@ -241,7 +243,7 @@ def CreateOcpSolver_TimeDyn() -> AcadosSim:
     ny = nx + nu
     ny_e = nx
     ocp.solver_options.N_horizon = N_horizon
-    Q_mat =  np.diag([5*1e2, 5*1e2, 1e1, 5*1e0, 1e1,1e0,1e-1,1e0]) #np.diag([5*1e0, 5*1e0, 1e1, 1e1, 5*1e1,1e2])  
+    Q_mat =  np.diag([5*1e1, 5*1e1, 1e1, 5*1e0, 1e1,1e0,1e-1,1e0]) #np.diag([5*1e0, 5*1e0, 1e1, 1e1, 5*1e1,1e2])  
 
     #path const
     ocp.cost.cost_type = "NONLINEAR_LS" 
@@ -250,14 +252,14 @@ def CreateOcpSolver_TimeDyn() -> AcadosSim:
     ocp.model.cost_y_expr = vertcat(model.x[:4], model.x[4]+arctan(model.x[3]/(model.x[2]+1e-5)), model.x[5] , model.u)
     #terminal cost
     ocp.cost.cost_type_e = "NONLINEAR_LS"
-    ocp.cost.W_e =2 * np.diag([5*1e1, 5*1e0, 1e1, 1e1, 5*1e1,1e1]) *ds_ocp
+    ocp.cost.W_e =2 * np.diag([5*1e1, 5*1e0, 1e1, 1e-1, 5*1e0,1e-1]) *ds_ocp
     yref_e = np.array([10, 0.0, 0.0, 0.0, np.pi/2, 0.0]) 
     ocp.cost.yref_e = yref_e
     ocp.model.cost_y_expr_e = model.x #vertcat(model.x[:4]) 
 
     # set constraints                                                                                                               
-    ocp.constraints.lbu = np.array([-5,-np.deg2rad(45)])
-    ocp.constraints.ubu = np.array([5, np.deg2rad(45)])
+    ocp.constraints.lbu = np.array([-1,-np.deg2rad(30)])
+    ocp.constraints.ubu = np.array([1, np.deg2rad(30)])
     ocp.constraints.idxbu = np.array([0,1])
     ocp.constraints.x0 = X0
     #ocp.constraints.lbx = np.array([-10, -10])

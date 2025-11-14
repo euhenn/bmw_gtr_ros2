@@ -22,6 +22,8 @@ ds = 0.01
 dt_control = 0.02
 nodes_to_visit = [230,307]
 nodes_to_visit = [141,91]#,125,150] #141,91,
+nodes_to_visit = [397,307,377]
+nodes_to_visit = [330,307]
 
 traj_gen = TrajectoryGeneration(ds=ds, N_horizon=50, v_max=0.6, v_min=0.3, 
                                   use_curvature_velocity=False, smooth_velocity=True)
