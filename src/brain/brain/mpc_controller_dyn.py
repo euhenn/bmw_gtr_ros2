@@ -33,9 +33,9 @@ class MPC_DynamicBicycle:
         self.mi = 0.9
 
         #air charachteristics
-        self.ro = 1.225
-        self.Cz = -0.4
-        self.Az=  0.5
+        self.ro = 1.2
+        self.Cd = 0.32
+        self.Az=  0.021
 
         self.ds, self.N_horizon = ds, N_horizon
         self.Tf = N_horizon * ds
@@ -156,7 +156,7 @@ class MPC_DynamicBicycle:
 
         m = ocp.model
         ocp.model.cost_y_expr = vertcat(
-            m.x[0] + arctan(self.lr * tan(m.u[1]) / self.L),
+            m.x[0] + arctan(m.x[6]/ (m.x[5]+1e-5)),
             m.x[1],
             m.x[5],
             m.u,
