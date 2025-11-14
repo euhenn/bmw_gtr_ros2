@@ -197,7 +197,7 @@ class MPC_DynamicBicycle:
     # ----------------------------------------------------------
     def update_reference_window(self, idx):
         for j in range(self.N_horizon):
-            ey_ref, epsi_ref = self.traj[:2, idx + j]
+            epsi_ref, ey_ref= self.traj[:2, idx + j]
             v_ref = self.traj[-1, idx + j]
             yref = np.array([epsi_ref, ey_ref, v_ref, 0, 0])
             self.solver.set(j, "yref", yref)
