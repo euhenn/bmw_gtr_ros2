@@ -338,7 +338,9 @@ class PathPlanning:
             psi0 = self.psi_ref[idx]
 
             # Lateral deviation (cross-track error)
-            ey = np.cos(psi0) * (Y - y_proj) - np.sin(psi0) * (X - x_proj)
+            #ey = np.cos(psi0) * (Y - y_proj) - np.sin(psi0) * (X - x_proj)
+            # Left side is positive, right is negative
+            ey = - (np.cos(psi0) * (Y - y_proj) - np.sin(psi0) * (X - x_proj))
 
             # Heading error, wrapped to [-π, π]
             epsi = psi0 - YAW

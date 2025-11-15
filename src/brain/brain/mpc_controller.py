@@ -195,6 +195,6 @@ class MPC_KinematicBicycle:
         Compute spatial state using the reference trajectory and current pose.
         """
         _, e_psi, e_y, idx = self.traj_gen.time2space(x, y, yaw)
-        state_ocp = np.array([e_psi, -e_y, x, y, yaw, v])
+        state_ocp = np.array([e_psi, e_y, x, y, yaw, v])
 
         return state_ocp, idx
