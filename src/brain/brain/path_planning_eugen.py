@@ -101,7 +101,7 @@ class PathPlanning:
 
             next_is_inter = next_node in self.intersection_cen
             prev_is_inter = prev_node in self.intersection_cen
-            next_is_roundabout = curr_node in self.roundabout
+            curr_is_roundabout = curr_node in self.roundabout
 
             if next_is_inter:
                 # approaching an intersection: place an EXIT offset after current node towards the intersection
@@ -137,8 +137,9 @@ class PathPlanning:
                     # IMPORTANT FIX: use OUTGOING heading so it connects well to the next segment
                     self.route_list.append((xc - offset_dist * dx_out, yc - offset_dist * dy_out, heading_out))
                     last_heading = heading_out
-            elif next_is_roundabout:
-                print(f"[INFO] Approaching roundabout at node {curr_node}")
+            elif curr_is_roundabout:
+                # Don t append those
+                pass
             else:
                 # normal segment (no intersection adjacent)
                 dx, dy = xn - xp, yn - yp
