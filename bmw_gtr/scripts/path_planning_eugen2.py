@@ -47,6 +47,8 @@ class PathPlanning:
         self.intersection_out = list(np.loadtxt(os.path.join(base_dir, 'data', 'int_out.txt'), dtype=str))
         self.stoplines = list(np.loadtxt(os.path.join(base_dir, 'data', 'stop_lines.txt'), dtype=str))
         self.forbidden_nodes = self.intersection_cen + self.intersection_in + self.intersection_out
+        self.roundabout = list(np.loadtxt(os.path.join(base_dir, 'data', 'round_in.txt'), dtype=str))
+        
 
         # Valid start nodes
         self.all_start_nodes = [n for n in self.G.nodes if n not in self.forbidden_nodes]
@@ -105,7 +107,8 @@ class PathPlanning:
 
             next_is_inter = next_node in self.intersection_cen
             prev_is_inter = prev_node in self.intersection_cen
-
+            next_is_roundabout = curr_node in self.roundabout
+            
             if next_is_inter:
                 # approaching an intersection: place an EXIT offset after current node towards the intersection
                 dx_in, dy_in = xc - xp, yc - yp
@@ -113,7 +116,7 @@ class PathPlanning:
                 if mode == "original":
                     # add center + offset (keep original behavior)
                     self.route_list.append((xc, yc, heading_in))
-                    self.route_list.append((xc + offset_dist * dx_in, yc + offset_dist * dy_in, heading_in))
+                    #self.route_list.append((xc + offset_dist * dx_in, yc + offset_dist * dy_in, heading_in))
                     last_heading = heading_in
                 else:
                     # skip center — keep only the offset
@@ -132,7 +135,7 @@ class PathPlanning:
 
                 if mode == "original":
                     # add entry offset (toward center) + the center itself
-                    self.route_list.append((xc - offset_dist * dx_out, yc - offset_dist * dy_out, heading_out))
+                    #self.route_list.append((xc - offset_dist * dx_out, yc - offset_dist * dy_out, heading_out))
                     self.route_list.append((xc, yc, heading_out))
                     last_heading = heading_out
                 else:
@@ -141,12 +144,16 @@ class PathPlanning:
                     self.route_list.append((xc - offset_dist * dx_out, yc - offset_dist * dy_out, heading_out))
                     last_heading = heading_out
 
+            elif next_is_roundabout:
+                print(f"[INFO] Approaching roundabout at node {curr_node}")
+                        
             else:
                 # normal segment (no intersection adjacent)
                 dx, dy = xn - xp, yn - yp
                 heading_mid = np.rad2deg(np.arctan2(dy, dx))
                 self.route_list.append((xc, yc, heading_mid))
                 last_heading = heading_mid
+            
 
             # advance along the route
             prev_node, curr_node = curr_node, next_node
@@ -549,9 +556,9 @@ class PathPlanning:
             seg_lengths = np.hypot(diffs[:, 0], diffs[:, 1])
             s = np.zeros(len(path), dtype=np.float32)
             s[1:] = np.cumsum(seg_lengths)
-        ax_k.plot(s, kappa, linewidth=1.5, label='Curvature κ(s)')
-        ax_k.set_xlabel('Arc length s [m]')
-        ax_k.set_ylabel('Curvature [1/m]')
+        ax_k.plot(s, kappa, linewidth=2, label=r'Curvature $\kappa(s)$')
+        ax_k.set_xlabel(r'Arc length s $[m]$')
+        ax_k.set_ylabel(r'Curvature $\kappa$ $[\frac{1}{m}]$')
         ax_k.grid(True)
         ax_k.legend()
 
@@ -566,8 +573,8 @@ class PathPlanning:
 if __name__ == "__main__":
     map_img = cv.imread('data/2024_VerySmall.png')
     planner = PathPlanning(map_img)
-    nodes_to_pass = [73, 97, 125, 150, 135]
-    nodes_to_pass = [330, 337]
+    nodes_to_pass = [141, 97, 125]
+    #nodes_to_pass = [397, 267]
     nodes_to_pass = [397, 307,377]
 
     # Generate path (now auto-stored inside planner)
@@ -586,8 +593,8 @@ if __name__ == "__main__":
     # Draw and visualize
     planner.draw_path_nodes(planner.route_list)
     planner.draw_path(np.column_stack((planner.x_ref, planner.y_ref)))
-    planner.draw_car(x, y, yaw)
-    planner.draw_car(x_ref[idx], y_ref[idx], psi_ref[idx])
+    #planner.draw_car(x, y, yaw)
+    #planner.draw_car(x_ref[idx], y_ref[idx], psi_ref[idx])
 
     planner.show_map_resized(roi_height_ratio=0.55,roi_width_ratio=0.35,scale=0.5)
     cv.waitKey(0)
