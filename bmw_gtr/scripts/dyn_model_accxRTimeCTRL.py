@@ -12,10 +12,10 @@ from vehicle_params import VehicleParams
 ds_ocp = 0.01
 dt_sim = 0.005
 dt_control = 0.02
-N_horizon = 50 #  here shorte
+N_horizon = 100 # NOTE: IT DID NOT WORK WITH HORIZON OF 50
 Tf =N_horizon * ds_ocp
 
-nodes_to_visit =[141,97,125,150]
+nodes_to_visit =[73,97,125,150, 135]
 nodes_to_visit = [397,307,377]
 #nodes_to_visit = [330,307]
 
@@ -194,7 +194,7 @@ def CreateOcpSolver_SpatialDyn() -> AcadosOcp:
     ny_e = 3
 
     ocp.solver_options.N_horizon = N_horizon
-    Q_mat = np.diag([5*1e2,1e3,1e-1])  
+    Q_mat = np.diag([5*1e1,1e2,1e-1])  
     R_mat =  np.diag([1e-1,1e-1])
 
     #path const
@@ -205,7 +205,7 @@ def CreateOcpSolver_SpatialDyn() -> AcadosOcp:
   
     #terminal costs
     ocp.cost.cost_type_e = "NONLINEAR_LS"
-    Q_mat = np.diag([1e2,5*1e3])
+    Q_mat = np.diag([1e1,5*1e2])
     ocp.cost.W_e = Q_mat*ds_ocp
     yref_e = np.array([0.0, 0.0]) 
     ocp.cost.yref_e = yref_e
@@ -213,14 +213,14 @@ def CreateOcpSolver_SpatialDyn() -> AcadosOcp:
  
     ocp.parameter_values  = np.array([s_ref[0]])
     # set constraints on the input                                                                                                             
-    ocp.constraints.lbu = np.array([-1, -np.deg2rad(30)])
-    ocp.constraints.ubu = np.array([1, np.deg2rad(30)])
+    ocp.constraints.lbu = np.array([-2, -np.deg2rad(30)])
+    ocp.constraints.ubu = np.array([2, np.deg2rad(30)])
     ocp.constraints.idxbu = np.array([0, 1])
     ocp.constraints.x0 = X0
 
     # constraints on the states
-    ocp.constraints.lbx = np.array([ -np.deg2rad(40), -0.5])
-    ocp.constraints.ubx = np.array([ np.deg2rad(40), 0.5])
+    ocp.constraints.lbx = np.array([ -np.deg2rad(45), -0.15])
+    ocp.constraints.ubx = np.array([ np.deg2rad(45), 0.15])
     ocp.constraints.idxbx = np.array([0,1])
 
     # set options
@@ -258,8 +258,8 @@ def CreateOcpSolver_TimeDyn() -> AcadosSim:
     ocp.model.cost_y_expr_e = model.x #vertcat(model.x[:4]) 
 
     # set constraints                                                                                                               
-    ocp.constraints.lbu = np.array([-1,-np.deg2rad(30)])
-    ocp.constraints.ubu = np.array([1, np.deg2rad(30)])
+    ocp.constraints.lbu = np.array([-2,-np.deg2rad(30)])
+    ocp.constraints.ubu = np.array([2, np.deg2rad(30)])
     ocp.constraints.idxbu = np.array([0,1])
     ocp.constraints.x0 = X0
     #ocp.constraints.lbx = np.array([-10, -10])
@@ -459,6 +459,7 @@ def plot_states(simX, simU, y_ref,Nf):
 
     # --- 2. States ---
     state_indices = [2, 3, 4, 5, 6, 7]  # x, y, vx, vy, theta, omega
+    state_indices = [2,3,]
     state_labels = [r'$x[m]$', r'$y[m]$', r'$v_x[\frac{m}{s}]$', r'$v_y[\frac{m}{s}]$', r'$\theta[rad]$', r'$\omega[\frac{rad}{s}]$']
     fig2, ax2 = plt.subplots(len(state_indices), 1, sharex=True, figsize=(6, 12))
     for j, idx in enumerate(state_indices):
@@ -470,7 +471,7 @@ def plot_states(simX, simU, y_ref,Nf):
     ax2[2].set_title("Speed", fontsize=12, fontweight='bold')
     ax2[4].set_title("Direction Angle", fontsize=12, fontweight='bold')
     ax2[-1].set_xlabel(r'Time$[s]$')
-    ax2[-1].legend(fontsize=11, loc='upper right')
+    ax2[-2].legend(fontsize=11, loc='upper right')
     ax2[-1].grid(True, linestyle="--", alpha=0.4)
     fig2.tight_layout(rect=[0, 0.05, 1, 1])
     
