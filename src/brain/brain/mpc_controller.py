@@ -8,6 +8,8 @@ from reference_generation_velocity import TrajectoryGeneration
 NODES = [73, 97, 125, 150,135] # random area
 #NODES = [397, 200]      # round about 3rd exit - going highway
 #NODES = [397, 307, 377] # round about 1 then 2nd exit
+#NODES = [397, 200]      # round about 3rd exit - going highway
+#NODES = [397, 307, 377] # round about 1 then 2nd exit
 
 class MPC_KinematicBicycle:
     def __init__(self, ds=0.01, N_horizon=100, nodes=NODES):
@@ -103,8 +105,8 @@ class MPC_KinematicBicycle:
         ocp.cost.yref_e = np.zeros(2)
 
     def _configure_constraints(self, ocp, nx, nu):
-        ocp.constraints.lbu = np.array([-2, -np.deg2rad(30)])
-        ocp.constraints.ubu = np.array([2, np.deg2rad(30)])
+        ocp.constraints.lbu = np.array([-10, -np.deg2rad(28)])
+        ocp.constraints.ubu = np.array([10, np.deg2rad(28)])
         ocp.constraints.idxbu = np.arange(nu)
 
         ocp.constraints.lbx = np.array([-np.deg2rad(40), -0.15])

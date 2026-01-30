@@ -14,7 +14,7 @@ def generate_launch_description():
         output="screen"
     )
 
-
+    '''
     # Respawn entity roundabout
     '''
     spawn_entity = Node(
