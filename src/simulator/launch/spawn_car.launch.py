@@ -16,6 +16,7 @@ def generate_launch_description():
 
 
     # Respawn entity roundabout
+    '''
     spawn_entity = Node(
         package="gazebo_ros",
         executable="spawn_entity.py",
@@ -51,7 +52,7 @@ def generate_launch_description():
         ],
         output="screen"
     )
-    '''
+
 
     delayed_delete = TimerAction(period=1.0, actions=[delete_entity])
     delayed_spawn = TimerAction(period=4.0, actions=[spawn_entity])

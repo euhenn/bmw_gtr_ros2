@@ -6,8 +6,8 @@ from casadi import SX, vertcat, cos, sin, tan, arctan, interpolant
 from reference_generation_velocity import TrajectoryGeneration
 
 NODES = [73, 97, 125, 150,135] # random area
-NODES = [397, 200]      # round about 3rd exit - going highway
-NODES = [397, 307, 377] # round about 1 then 2nd exit
+#NODES = [397, 200]      # round about 3rd exit - going highway
+#NODES = [397, 307, 377] # round about 1 then 2nd exit
 
 class MPC_KinematicBicycle:
     def __init__(self, ds=0.01, N_horizon=100, nodes=NODES):
@@ -23,7 +23,7 @@ class MPC_KinematicBicycle:
     # Reference trajectory
     # ----------------------------------------------------------
     def _load_reference(self, nodes):
-        self.traj_gen = TrajectoryGeneration(self.ds, self.N_horizon,use_curvature_velocity=False, v_max=0.4, v_min=0.2, smooth_velocity=True)
+        self.traj_gen = TrajectoryGeneration(self.ds, self.N_horizon,use_curvature_velocity=False, v_max=0.5, v_min=0.2, smooth_velocity=True)
         self.traj, self.s_ref, kappa_ref = self.traj_gen.generating_spatial_reference(nodes)
         self.kappa = interpolant("kappa", "bspline", [self.s_ref], kappa_ref)
         self.x0 = self.traj[:, 0]
@@ -82,33 +82,9 @@ class MPC_KinematicBicycle:
 
     def _configure_costs(self, ocp, nx, nu):
 
-        #DON T MODIFY
-        Q = np.diag([5e3, 1e2, 5e0])   
-        R = np.diag([2e-2, 1e2])      
-        #DON T MODIFY (VIDEO 2025.10.25 used at 11:12)
-        Q = np.diag([5e3, 1e2, 5e-1])   
-        R = np.diag([2e-2, 1e2])    
-
-        # r speed at e-5 goes crazy, crazy good
-        Q = np.diag([5e3, 1e2, 5e0])   
-        R = np.diag([5e-6, 1e-2])    
-
-        # Roundabout that works well for 3rd exit
-        Q = np.diag([5e1, 1e2, 1e0])   
-        R = np.diag([5e-3, 1e-1])  
-        ocp.cost.W_e = np.diag([5e-5, 1e2]) * self.ds
-        ocp.cost.W = scipy.linalg.block_diag(Q, R)
-
-        # roundabout crazy good with -2 index or -1  
-        Q = np.diag([1e3, 2e2, 1e0])   
-        R = np.diag([5e-3, 5e-2])  
-        ocp.cost.W_e = np.diag([1e3, 2e2]) * self.ds
-        ocp.cost.W = scipy.linalg.block_diag(Q, R)
-
-        # Tests 
-        Q = np.diag([2e2, 5e2, 1e0])   
-        R = np.diag([7e-4, 5e-4])   
-        ocp.cost.W_e = np.diag([2e2, 5e2]) * self.ds
+        Q = np.diag([1e2, 6e2, 1e-1])   
+        R = np.diag([1e-2, 1e-2])   
+        ocp.cost.W_e = np.diag([1e2, 6e2]) * self.ds
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
         
         ocp.cost.cost_type   = "NONLINEAR_LS"
