@@ -39,7 +39,7 @@ class CarControllerNode(Node):
             "e_psi", "e_y",
             "a_cmd", "delta_cmd",
             "v_cmd",
-            "e2","e3","est_p_ahead"
+            "e2","e3"
         ])
 
         # --- Initialize simulator ---
