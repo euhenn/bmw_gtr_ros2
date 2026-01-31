@@ -11,6 +11,7 @@ import csv
 
 from automobile_data_simulator import AutomobileDataSimulator
 from mpc_controller import MPC_KinematicBicycle
+from detection import Detection
 
 # -------------------------------
 # Control loop parameters
@@ -37,7 +38,8 @@ class CarControllerNode(Node):
             "x", "y", "yaw", "v", "delta_actual",
             "e_psi", "e_y",
             "a_cmd", "delta_cmd",
-            "v_cmd"
+            "v_cmd",
+            "e2","e3","est_p_ahead"
         ])
 
         # --- Initialize simulator ---
@@ -45,7 +47,8 @@ class CarControllerNode(Node):
             trig_control=True,
             trig_bno=True,
             trig_enc=True,
-            trig_gps=True
+            trig_gps=True,
+            trig_cam=True
         )
 
         # --- Background simulator thread ---
@@ -56,6 +59,8 @@ class CarControllerNode(Node):
 
         # --- Initialize MPC ---
         self.mpc = MPC_KinematicBicycle(ds=0.01, N_horizon=40)
+
+        self.detector = Detection()
 
         # --- Initialize control variables ---
         self.get_logger().info(f"Control loop target rate: {TARGET_FPS} Hz")
@@ -87,6 +92,15 @@ class CarControllerNode(Node):
         """Send control commands to simulator."""
         self.car.pub_speed(v)
         self.car.drive_angle(np.rad2deg(delta))
+
+    def follow_lane(self):
+        e2, e3, point_ahead = self.detector.detect_lane(self.car.frame)
+        print("\nERROR e2 = ", e2)
+        print("ERROR e3 = ", e3)
+        print("ERROR point_ahead = ", point_ahead, "\n")
+
+    def reset_odo(self):
+        self.car.encoder_distance = 0.0
 
     # ---------------------------------------------------------------
     # MAIN CONTROL LOOP (WITH FPS LIMITER)
@@ -135,6 +149,9 @@ class CarControllerNode(Node):
 
                 a_prev, delta_prev = a_cmd, delta_cmd
 
+                e2, e3, _ = self.detector.detect_lane(self.car.frame)
+                print("\nEncoder distance: ", self.car.encoder_distance)
+
             except Exception as e:
                 self.get_logger().error(f"Control loop error: {e}")
                 self.apply_control(0.0, 0.0)
@@ -147,7 +164,8 @@ class CarControllerNode(Node):
                 x, y, yaw, v, self.car.curr_steer,
                 e_psi, e_y,
                 a_cmd, delta_cmd,
-                v_cmd
+                v_cmd,
+                e2, e3
             ]))
 
             # === 7. FPS limiter ===
@@ -199,6 +217,8 @@ def main():
     node = CarControllerNode()
 
     try:
+        time.sleep(1)
+        node.reset_odo()
         node.run()
     except KeyboardInterrupt:
         pass

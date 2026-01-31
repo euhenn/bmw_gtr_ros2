@@ -78,8 +78,8 @@ class MPC_KinematicBicycle:
         self._configure_constraints(ocp, nx, nu)
         self._configure_solver_options(ocp)
 
-        self.solver = AcadosOcpSolver(ocp, json_file="acados_ocp.json")
-        #self.solver = AcadosOcpSolver(None,generate=False,build=False,json_file="acados_ocp.json")
+        #self.solver = AcadosOcpSolver(ocp, json_file="acados_ocp.json")
+        self.solver = AcadosOcpSolver(None,generate=False,build=False,json_file="acados_ocp.json")
 
 
     def _configure_costs(self, ocp, nx, nu):
